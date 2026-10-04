@@ -1,0 +1,1 @@
+# Este arquivo será destinado à listagem das dependências Python do backend (ex: fastapi, uvicorn, sqlalchemy, etc.).
