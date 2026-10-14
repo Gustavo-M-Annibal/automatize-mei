@@ -1,8 +1,8 @@
 from database.connection import SessionLocal, engine
 from database.models import Base
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException # pyright: ignore[reportMissingImports]
 from repositories.usuario_repository import UsuarioRepository
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session # type: ignore
 
 # Cria as tabelas automaticamente caso não use Alembic
 Base.metadata.create_all(bind=engine)
