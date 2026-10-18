@@ -6,9 +6,9 @@ services:
     container_name: postgres_automatize_mei
     restart: always
     environment:
-      POSTGRES_DB: automatize_mei
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: duda123456
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       
     ports:
       - "5432:5432"

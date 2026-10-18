@@ -1,4 +1,4 @@
-from database.models import ProdutoSaborModel
+from backend.app.models.produto_sabor_model import ProdutoSaborModel
 from sqlalchemy.orm import Session
 
 

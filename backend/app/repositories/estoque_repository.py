@@ -1,4 +1,4 @@
-from database.models import  EstoqueModel
+from backend.app.models.produto_sabor_model import  EstoqueModel
 
 from sqlalchemy.orm import Session
 

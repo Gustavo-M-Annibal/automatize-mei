@@ -1,4 +1,4 @@
-from database.models import VendaModel
+from backend.app.models.produto_sabor_model import VendaModel
 from sqlalchemy.orm import Session
 
 

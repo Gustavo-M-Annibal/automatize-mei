@@ -1,4 +1,4 @@
-from database.models import  FechamentoModel
+from backend.app.models.produto_sabor_model import  FechamentoModel
 from sqlalchemy.orm import Session
 
 
