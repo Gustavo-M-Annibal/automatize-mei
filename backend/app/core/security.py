@@ -1,1 +1,9 @@
-"""Este arquivo será destinado às rotinas de segurança da API (hash de senhas com bcrypt, geração e validação de tokens JWT, caso haja autenticação)."""
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def gerar_hash_senha(senha: str) -> str:
+    return pwd_context.hash(senha)
+
+def verificar_senha(senha_pura: str, senha_hashed: str) -> bool:
+    return pwd_context.verify(senha_pura, senha_hashed)
