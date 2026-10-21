@@ -1,58 +1,38 @@
-from database.connection import SessionLocal, engine
-from backend.app.models.produto_sabor_model import Base
-from fastapi import Depends, FastAPI, HTTPException # pyright: ignore[reportMissingImports]
-from backend.app.repositories.usuario_repository import UsuarioRepository
-from sqlalchemy.orm import Session # type: ignore
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
 
-# Cria as tabelas automaticamente caso não use Alembic
-Base.metadata.create_all(bind=engine)
+from backend.app.api import fechamentos as fechamentos_router
 
-app = FastAPI()
+app = FastAPI(title="Automatize MEI API", version="1.0.0")
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Dependência para abrir e fechar a sessão com o banco a cada requisição
-def get_db():
-  db = SessionLocal()
-  try:
-    yield db
-  finally:
-    db.close()
-
-
-# C (Create - Inclusão)
-@app.post("/usuarios/")
-def criar_usuario(nome: str, email: str, db: Session = Depends(get_db)):
-  repo = UsuarioRepository(db)
-  return repo.criar(nome, email)
+app.include_router(fechamentos_router.router)
 
 
-# R (Read - Consulta)
-@app.get("/usuarios/{usuario_id}")
-def buscar_usuario(usuario_id: int, db: Session = Depends(get_db)):
-  repo = UsuarioRepository(db)
-  usuario = repo.buscar_por_id(usuario_id)
-  if not usuario:
-    raise HTTPException(status_code=404, detail="Usuário não encontrado")
-  return usuario
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    return JSONResponse(status_code=exc.status_code, content={"detail": str(exc.detail)})
 
 
-# U (Update - Alteração)
-@app.put("/usuarios/{usuario_id}")
-def atualizar_usuario(
-    usuario_id: int, nome: str, email: str, db: Session = Depends(get_db)
-):
-  repo = UsuarioRepository(db)
-  usuario = repo.atualizar(usuario_id, nome, email)
-  if not usuario:
-    raise HTTPException(status_code=404, detail="Usuário não encontrado")
-  return usuario
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    return JSONResponse(status_code=422, content={"detail": "Dados inválidos."})
 
 
-# D (Delete - Exclusão)
-@app.delete("/usuarios/{usuario_id}")
-def deletar_usuario(usuario_id: int, db: Session = Depends(get_db)):
-  repo = UsuarioRepository(db)
-  usuario = repo.deletar(usuario_id)
-  if not usuario:
-    raise HTTPException(status_code=404, detail="Usuário não encontrado")
-  return {"mensagem": "Usuário deletado com sucesso"}
+@app.exception_handler(Exception)
+async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    return JSONResponse(status_code=500, content={"detail": "Erro interno do servidor."})
+
+
+@app.get("/")
+def root():
+    return {"status": "ok"}
