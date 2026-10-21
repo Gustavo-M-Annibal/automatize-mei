@@ -1,39 +1,81 @@
-from backend.app.models.produto_sabor_model import  FechamentoModel
+from datetime import date, datetime
+from decimal import Decimal
+
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from backend.app.models.fechamento_model import Fechamento
+from backend.app.models.venda_model import Venda
+from backend.app.models.despesa_model import Despesa
+from backend.app.core.timezone import get_day_utc_bounds
 
-class FechamentoRepository:
 
-  def __init__(self, db: Session):
-    self.db = db
+def listar_todos(db: Session) -> list[Fechamento]:
+    return db.query(Fechamento).order_by(Fechamento.data).all()
 
-  def criar(self, produto_id: int, usuario_id: int, quantidade_atual: float):
-    db_fechamento = FechamentoModel(fk_produto_id=produto_id, fk_usuario_id=usuario_id, quantidade_atual=quantidade_atual)
-    self.db.add(db_fechamento)
-    self.db.commit()
-    self.db.refresh(db_fechamento)
-    return db_fechamento
 
-  def buscar_por_id(self, fk_usuario_id: int):
-    return (
-        self.db.query(FechamentoModel).filter(FechamentoModel.fk_usuario_id == fk_usuario_id).first()
+def buscar_por_dia(db: Session, data_dia: date) -> Fechamento | None:
+    return db.query(Fechamento).filter(Fechamento.data_dia == data_dia).first()
+
+
+def buscar_por_id(db: Session, fechamento_id: int) -> Fechamento | None:
+    return db.query(Fechamento).filter(Fechamento.id == fechamento_id).first()
+
+
+def calcular_totais_dia(db: Session, data_dia: date) -> dict:
+    """Recalcula vendas_dinheiro, total_cartao e saidas_gaveta do dia a partir dos registros."""
+    inicio, fim = get_day_utc_bounds(data_dia)
+
+    vendas_dinheiro = (
+        db.query(func.coalesce(func.sum(Venda.valor), 0))
+        .filter(Venda.data >= inicio, Venda.data <= fim, Venda.forma_pagamento == "dinheiro")
+        .scalar()
     )
 
-  def listar_todos(self):
-    return self.db.query(FechamentoModel).all()
+    total_cartao = (
+        db.query(func.coalesce(func.sum(Venda.valor), 0))
+        .filter(Venda.data >= inicio, Venda.data <= fim, Venda.forma_pagamento == "cartao")
+        .scalar()
+    )
 
-  def atualizar(self, produto_id: int, usuario_id: int, quantidade_atual: float):
-    fechamento = self.buscar_por_id(usuario_id)
-    if fechamento:
-      fechamento.fk_produto_id = produto_id
-      fechamento.quantidade_atual = quantidade_atual
-      self.db.commit()
-      self.db.refresh(fechamento)
+    saidas_gaveta = (
+        db.query(func.coalesce(func.sum(Despesa.valor), 0))
+        .filter(Despesa.data >= inicio, Despesa.data <= fim, Despesa.da_gaveta.is_(True))
+        .scalar()
+    )
+
+    return {
+        "vendas_dinheiro": Decimal(str(vendas_dinheiro)),
+        "total_cartao": Decimal(str(total_cartao)),
+        "saidas_gaveta": Decimal(str(saidas_gaveta)),
+    }
+
+
+def criar(
+    db: Session,
+    data: datetime,
+    data_dia: date,
+    troco_inicial: Decimal,
+    vendas_dinheiro: Decimal,
+    saidas_gaveta: Decimal,
+    contado_dinheiro: Decimal,
+    total_cartao: Decimal,
+) -> Fechamento:
+    fechamento = Fechamento(
+        data=data,
+        data_dia=data_dia,
+        troco_inicial=troco_inicial,
+        vendas_dinheiro=vendas_dinheiro,
+        saidas_gaveta=saidas_gaveta,
+        contado_dinheiro=contado_dinheiro,
+        total_cartao=total_cartao,
+    )
+    db.add(fechamento)
+    db.commit()
+    db.refresh(fechamento)
     return fechamento
 
-  def deletar(self, produto_id: int, usuario_id: int, quantidade_atual: float):
-    fechamento = self.buscar_por_id(usuario_id)
-    if fechamento:
-      self.db.delete(fechamento)
-      self.db.commit()
-    return fechamento
+
+def deletar(db: Session, fechamento: Fechamento) -> None:
+    db.delete(fechamento)
+    db.commit()
