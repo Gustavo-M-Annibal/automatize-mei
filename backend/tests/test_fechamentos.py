@@ -1,0 +1,65 @@
+"""Testes de integração dos endpoints de fechamento."""
+
+
+FECHAMENTO_PAYLOAD = {
+    "data": "2026-10-20T19:00:00-03:00",
+    "troco_inicial": 20.0,
+    "contado_dinheiro": 94.5,
+}
+
+
+def test_listar_fechamentos_vazio(client):
+    resp = client.get("/fechamentos")
+    assert resp.status_code == 200
+    assert resp.json() == []
+
+
+def test_criar_fechamento_retorna_objeto_com_id(client):
+    resp = client.post("/fechamentos", json=FECHAMENTO_PAYLOAD)
+    assert resp.status_code == 201
+    data = resp.json()
+    assert "id" in data
+    assert data["troco_inicial"] == "20.00"
+    assert data["contado_dinheiro"] == "94.50"
+    assert "vendas_dinheiro" in data
+    assert "saidas_gaveta" in data
+    assert "total_cartao" in data
+
+
+def test_criar_fechamento_duplicado_retorna_409(client):
+    client.post("/fechamentos", json=FECHAMENTO_PAYLOAD)
+    resp = client.post("/fechamentos", json=FECHAMENTO_PAYLOAD)
+    assert resp.status_code == 409
+    assert "detail" in resp.json()
+    assert isinstance(resp.json()["detail"], str)
+
+
+def test_deletar_fechamento_existente(client):
+    criado = client.post("/fechamentos", json=FECHAMENTO_PAYLOAD)
+    fechamento_id = criado.json()["id"]
+    resp = client.delete(f"/fechamentos/{fechamento_id}")
+    assert resp.status_code == 200
+    assert resp.json()["detail"] == "Fechamento removido."
+
+
+def test_deletar_fechamento_inexistente_retorna_404(client):
+    resp = client.delete("/fechamentos/999")
+    assert resp.status_code == 404
+    assert isinstance(resp.json()["detail"], str)
+
+
+def test_listar_fechamentos_apos_criar(client):
+    client.post("/fechamentos", json=FECHAMENTO_PAYLOAD)
+    resp = client.get("/fechamentos")
+    assert resp.status_code == 200
+    items = resp.json()
+    assert len(items) == 1
+    assert items[0]["troco_inicial"] == "20.00"
+
+
+def test_reabrir_caixa_permite_novo_fechamento(client):
+    criado = client.post("/fechamentos", json=FECHAMENTO_PAYLOAD)
+    fechamento_id = criado.json()["id"]
+    client.delete(f"/fechamentos/{fechamento_id}")
+    resp = client.post("/fechamentos", json=FECHAMENTO_PAYLOAD)
+    assert resp.status_code == 201
