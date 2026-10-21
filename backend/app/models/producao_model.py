@@ -1,14 +1,12 @@
-from database.conection import Base
-from math import integer
-from sqlalchemy import Column , Integer , String
+from database.connection import Base
+from sqlalchemy import Column, Integer, DateTime, ForeignKey
+from sqlalchemy.sql import func
 
 
+class Producao(Base):
+    __tablename__ = "producoes"
 
-
-class ProducaoModel(Base):
-    __tablename__ = "producao"
-
-    id = Column(Integer, primary_key= True, index= True)
-    fk_produto_id = Column(Integer, nullable= False)
-    fk_usuario_id = Column(Integer, nullable= False)
-    quantidade =  Column(float, nullable= False, default=0.0)
+    id = Column(Integer, primary_key=True, index=True)
+    produto_id = Column(Integer, ForeignKey("produtos.id"), nullable=False)
+    quantidade = Column(Integer, nullable=False)
+    data = Column(DateTime(timezone=True), nullable=False, server_default=func.now())

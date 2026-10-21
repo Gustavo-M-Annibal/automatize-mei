@@ -1,1 +1,6 @@
-"""Este arquivo será destinado às entidades/modelos do domínio do negócio (ex: Produto, Venda, Produção, Estoque), conforme os requisitos definidos no levantamento com a parceira."""
+from .produto_model import Produto
+from .venda_model import Venda
+from .despesa_model import Despesa
+from .fechamento_model import Fechamento
+from .producao_model import Producao
+from .perda_model import Perda
