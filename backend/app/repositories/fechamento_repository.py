@@ -1,7 +1,11 @@
+<<<<<<< HEAD
 from datetime import date, datetime
 from decimal import Decimal
 
 from sqlalchemy import func
+=======
+from backend.app.models.produto_model import  FechamentoModel
+>>>>>>> fc2d594 (feat: validacao da assinatura e expiracao do token, retirnar HTTP 401 para token ausente ou inválido  e retornar HTTP 403 quando houver usuário sem permissão, se aplicável.)
 from sqlalchemy.orm import Session
 
 from backend.app.models.fechamento_model import Fechamento
