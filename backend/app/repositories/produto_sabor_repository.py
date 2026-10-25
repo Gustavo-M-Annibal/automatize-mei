@@ -1,4 +1,5 @@
-from backend.app.models.produto_model import ProdutoSaborModel
+from sqlalchemy import Float
+from app.models.produto_model import ProdutoSaborModel
 from sqlalchemy.orm import Session
 
 
@@ -7,7 +8,7 @@ class ProdutoSaborRepository:
   def __init__(self, db: Session):
     self.db = db
 
-  def criar(self, produto_id: int, usuario_id: int, quantidade_atual: float):
+  def criar(self, produto_id: int, usuario_id: int, quantidade_atual: Float):
     db_produto_sabor = ProdutoSaborModel(fk_produto_id=produto_id, fk_usuario_id=usuario_id, quantidade_atual=quantidade_atual)
     self.db.add(db_produto_sabor)
     self.db.commit()
@@ -22,7 +23,7 @@ class ProdutoSaborRepository:
   def listar_todos(self):
     return self.db.query(ProdutoSaborModel).all()
 
-  def atualizar(self, produto_id: int, usuario_id: int, quantidade_atual: float):
+  def atualizar(self, produto_id: int, usuario_id: int, quantidade_atual: Float):
     produto_sabor = self.buscar_por_id(usuario_id)
     if produto_sabor:
       produto_sabor.fk_produto_id = produto_id
@@ -31,7 +32,7 @@ class ProdutoSaborRepository:
       self.db.refresh(produto_sabor)
     return produto_sabor
 
-  def deletar(self, produto_id: int, usuario_id: int, quantidade_atual: float):
+  def deletar(self, produto_id: int, usuario_id: int, quantidade_atual: Float):
     produto_sabor = self.buscar_por_id(usuario_id)
     if produto_sabor:
       self.db.delete(produto_sabor)

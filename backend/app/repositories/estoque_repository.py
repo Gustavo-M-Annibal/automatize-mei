@@ -1,5 +1,5 @@
-from backend.app.models.produto_model import  EstoqueModel
-
+from sqlalchemy import Float
+from app.models.produto_model import  EstoqueModel
 from sqlalchemy.orm import Session
 
 
@@ -8,7 +8,7 @@ class EstoqueRepository:
   def __init__(self, db: Session):
     self.db = db
 
-  def criar(self, produto_id: int, usuario_id: int, quantidade_atual: float):
+  def criar(self, produto_id: int, usuario_id: int, quantidade_atual: Float):
     db_estoque = EstoqueModel(fk_produto_id=produto_id, fk_usuario_id=usuario_id, quantidade_atual=quantidade_atual)
     self.db.add(db_estoque)
     self.db.commit()
@@ -23,7 +23,7 @@ class EstoqueRepository:
   def listar_todos(self):
     return self.db.query(EstoqueModel).all()
 
-  def atualizar(self, produto_id: int, usuario_id: int, quantidade_atual: float):
+  def atualizar(self, produto_id: int, usuario_id: int, quantidade_atual: Float):
     estocagem = self.buscar_por_id(usuario_id)
     if estocagem:
       estocagem.fk_produto_id = produto_id

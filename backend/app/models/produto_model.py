@@ -3,9 +3,9 @@ from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String
 
 
 class ProdutoModel(Base):
-  __tablename__ = "produtos"
+  __tablename__ = "produto"
 
-  id = Column(Integer, primary_key=True, index=True)
+  id = Column(Integer, primary_key=True)
   nome = Column(String, nullable=False)
   preco = Column(Float, nullable=False)
   estoque = Column(Integer, default=0)

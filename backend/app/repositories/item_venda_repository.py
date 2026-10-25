@@ -1,4 +1,5 @@
-from backend.app.models.produto_model import ItemVendaModel
+from sqlalchemy import Float
+from app.models.produto_model import ItemVendaModel
 from sqlalchemy.orm import Session
 
 
@@ -7,7 +8,7 @@ class ItemVendaRepository:
   def __init__(self, db: Session):
     self.db = db
 
-  def criar(self, produto_id: int, usuario_id: int, quantidade_atual: float):
+  def criar(self, produto_id: int, usuario_id: int, quantidade_atual: Float):
     db_item_venda = ItemVendaModel(fk_produto_id=produto_id, fk_usuario_id=usuario_id, quantidade_atual=quantidade_atual)
     self.db.add(db_item_venda)
     self.db.commit()

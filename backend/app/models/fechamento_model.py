@@ -1,13 +1,12 @@
-from database.conection import Base
-from math import integer
-from sqlalchemy import Column , Integer , String
+from database.connection import Base
+from sqlalchemy import Column, Float, Integer, String
 
 
 class FechamentoModel(Base):
-        __tablename__ = "fechamento"
+  __tablename__ = "fechamento"
 
-        id = Column(Integer, primary_key= True, index= True)
-        fk_usuario_id = Column(Integer, nullable= False)
-        data_fechamento = Column(String, nullable= False)
-        valor_total =  Column(float, nullable= False, default=0.0)
-        status= Column(String, nullable= False, default="aberto")
+  id = Column(Integer, primary_key=True)
+  mes = Column(Integer, nullable=False)
+  ano = Column(Integer, nullable=False)
+  valor_total = Column(Float, nullable=False, default=0.0)
+  status = Column(String, nullable=False, default="aberto")
