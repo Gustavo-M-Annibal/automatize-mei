@@ -2,7 +2,8 @@ from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.deps import obter_usuario_atual
-from app.models import produto, Fechamento as FechamentoModel
+from app.models.produto_model import Produto
+from app.models.fechamento_model import Fechamento as FechamentoModel
 from app.repositories.usuario_repository import UsuarioRepository
 from database.connection import Base, SessionLocal, engine
 

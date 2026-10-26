@@ -10,8 +10,8 @@ from typing import NoReturn
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
-TABELA_PRODUTOS = "produto"
-TABELA_VENDAS = "venda"
+TABELA_PRODUTOS = "produtos"
+TABELA_VENDAS = "vendas"
 
 # Verifica E baixa em um único comando. Se não há estoque suficiente, o WHERE não
 # casa, nenhuma linha é alterada e nada é devolvido. O PostgreSQL trava a linha
