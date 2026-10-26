@@ -41,12 +41,21 @@ class EstoqueInsuficienteError(Exception):
         self.disponivel = disponivel
 
 
-def registrar_venda(db: Session, itens, forma_pagamento: str) -> dict:
-    """`itens`: lista de objetos com .produto_id e .quantidade.
+def registrar_venda(db: Session, item_ou_itens, forma_pagamento: str | None = None) -> dict:
+    """Registra uma venda simples por produto ou, por compatibilidade, uma lista de itens.
 
-    Cria uma linha em `vendas` por produto (o esquema atual guarda 1 produto por
-    linha) e baixa o estoque de cada um. Se QUALQUER passo falhar, nada é gravado.
+    O app atual envia um único produto por requisição; neste caso, o item já traz a
+    forma de pagamento. A compatibilidade com a estrutura antiga é mantida para evitar
+    quebrar o restante do backend.
     """
+    if hasattr(item_ou_itens, "produto_id") and hasattr(item_ou_itens, "quantidade"):
+        itens = [item_ou_itens]
+        forma_pagamento = item_ou_itens.forma_pagamento if forma_pagamento is None else forma_pagamento
+    else:
+        itens = item_ou_itens
+        if forma_pagamento is None:
+            raise ValueError("forma_pagamento é obrigatório quando a venda vem em lista.")
+
     # Junta itens repetidos do mesmo produto (2 + 3 = 5) para validar o estoque pelo total.
     quantidades: dict[int, int] = {}
     for item in itens:
