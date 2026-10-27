@@ -4,10 +4,10 @@ from decimal import Decimal
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.core.timezone import get_day_utc_bounds
-from app.models.despesa_model import Despesa
-from app.models.fechamento_model import Fechamento
-from app.models.venda_model import Venda
+from backend.app.core.timezone import get_day_utc_bounds
+from backend.app.models.despesa_model import Despesa
+from backend.app.models.fechamento_model import Fechamento
+from backend.app.models.venda_model import Venda
 
 
 def listar_todos(db: Session) -> list[Fechamento]:

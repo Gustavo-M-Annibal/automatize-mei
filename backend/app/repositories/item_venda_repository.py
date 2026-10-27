@@ -1,5 +1,5 @@
 from sqlalchemy import Float
-from app.models.produto_model import ItemVendaModel
+from backend.app.models.produto_model import ItemVendaModel
 from sqlalchemy.orm import Session
 
 

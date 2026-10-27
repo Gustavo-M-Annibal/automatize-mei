@@ -1,10 +1,10 @@
 from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.core.deps import obter_usuario_atual
-from app.models.produto_model import Produto
-from app.models.fechamento_model import Fechamento as FechamentoModel
-from app.repositories.usuario_repository import UsuarioRepository
+from backend.app.core.deps import obter_usuario_atual
+from backend.app.models.produto_model import ProdutoModel as Produto
+from backend.app.models.fechamento_model import FechamentoModel
+from backend.app.repositories.usuario_repository import UsuarioRepository
 from database.connection import Base, SessionLocal, engine
 
 # Cria as tabelas automaticamente caso não use Alembic
