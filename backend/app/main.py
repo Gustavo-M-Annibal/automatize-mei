@@ -1,9 +1,11 @@
+from backend.app.schemas.produto_schema import ProdutoCreate, ProdutoMovimentacaoEstoque, ProdutoUpdate
+from backend.app.services.produto_service import EstoqueInsuficienteError, ProdutoNaoEncontradoError, ProdutoService
 from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.deps import obter_usuario_atual
-from app.models.produto_model import Produto
-from app.models.fechamento_model import Fechamento as FechamentoModel
+from app.models.produto_model import ProdutoModel
+from app.models.fechamento_model import FechamentoModel
 from app.repositories.usuario_repository import UsuarioRepository
 from database.connection import Base, SessionLocal, engine
 
@@ -64,8 +66,57 @@ def deletar_usuario(usuario_id: int, db: Session = Depends(get_db)):
 # Listagem de produtos (Estoque)
 @app.get("/produtos/")
 def listar_produtos(db: Session = Depends(get_db), usuario_atual: str = Depends(obter_usuario_atual)):
-    return db.query(Produto).all()
+    return db.query(ProdutoModel).all()
 
+#Criação de produtos (Estoque)
+@app.post("/produtos/")
+def criar_produto(dados: ProdutoCreate, db: Session = Depends(get_db)):
+    service = ProdutoService(db)
+    return service.criar(dados)
+
+#Atualização de produtos (Estoque)
+@app.put("/produtos/{produto_id}")
+def atualizar_produto(id: int, dados: ProdutoUpdate, db: Session = Depends(get_db)):
+    service = ProdutoService(db)
+    try:
+        return service.atualizar(id, dados)
+    except ProdutoNaoEncontradoError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    
+# Deleção de produtos (Estoque)
+@app.delete("/produtos/{produto_id}")
+def deletar_produto(id: int, db: Session = Depends(get_db)):
+    service = ProdutoService(db)
+    try:
+        service.deletar(id)
+    except ProdutoNaoEncontradoError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except ValueError as e:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=str(e))
+    
+# post para movimentação de estoque (Estoque)
+@app.post("/produtos/{produto_id}/movimentar_estoque/")
+def registrar_producao(produto_id: int, dados: ProdutoMovimentacaoEstoque, db: Session = Depends(get_db)):
+    service = ProdutoService(db)
+    try:
+        return service.incrementar_producao(produto_id, dados.quantidade)
+    except ProdutoNaoEncontradoError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    
+# post para movimentação de estoque (Estoque)
+@app.post("/produtos/{produto_id}/perder_estoque/")
+def registrar_perda(produto_id: int, dados: ProdutoMovimentacaoEstoque, db: Session = Depends(get_db)):
+    service = ProdutoService(db)
+    try:
+        return service.decrementar_perda(produto_id, dados.quantidade)
+    except ProdutoNaoEncontradoError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+    except EstoqueInsuficienteError as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))    
+    
+    
+    
+    
 
 # Registro em Vendas
 @app.post("/vendas/", status_code=status.HTTP_201_CREATED)
