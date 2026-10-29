@@ -5,6 +5,7 @@ from sqlalchemy import Column, Float, Integer, String
 
 class VendaModel(Base):
         __tablename__ = "venda"
+        __table_args__ = {'extend_existing': True}
 
         id = Column(Integer, primary_key= True)
         fk_usuario_id = Column(Integer, nullable= False)

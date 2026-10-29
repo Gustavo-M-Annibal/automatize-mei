@@ -5,6 +5,7 @@ from sqlalchemy.sql import func
 
 class PerdaModel(Base):
     __tablename__ = "perdas"
+    __table_args__ = {'extend_existing': True}
 
     id = Column(Integer, primary_key=True)
     produto_id = Column(Integer, ForeignKey("produto.id"), nullable=False)

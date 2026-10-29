@@ -4,6 +4,7 @@ from sqlalchemy import Column, Float, Integer, String
 
 class FechamentoModel(Base):
   __tablename__ = "fechamento"
+  __table_args__ = {'extend_existing': True}
 
   id = Column(Integer, primary_key=True)
   mes = Column(Integer, nullable=False)

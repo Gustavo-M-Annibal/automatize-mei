@@ -4,6 +4,7 @@ from sqlalchemy import Column, Float, Integer, String
 
 class ProducaoModel(Base):
   __tablename__ = "producao"
+  __table_args__ = {'extend_existing': True}
 
   id = Column(Integer, primary_key=True)
   fk_produto_id = Column(Integer, nullable=False)
