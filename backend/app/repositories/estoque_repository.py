@@ -1,5 +1,5 @@
 from sqlalchemy import Float
-from app.models.produto_model import  EstoqueModel
+from backend.app.models.produto_model import  EstoqueModel
 from sqlalchemy.orm import Session
 
 

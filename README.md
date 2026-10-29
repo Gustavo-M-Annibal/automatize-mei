@@ -105,16 +105,19 @@ automatize-mei/
 
 **Pré-requisitos:** Docker, Python 3.11+
 
-1. **Suba o PostgreSQL:**
-   ```bash
-   docker compose up -d
-   ```
-
-2. **Crie o arquivo `.env`** copiando o exemplo e ajustando as variáveis:
+1. **Crie o arquivo `.env`** copiando o exemplo e ajustando as variáveis:
    ```bash
    cp .env.example .env
    ```
-   Variáveis disponíveis: `DB_USER`, `DB_PASSWORD`, `DB_HOST`, `DB_PORT`, `DB_NAME`, `BUSINESS_TZ`.
+   As variáveis `DB_USER`, `DB_PASSWORD` e `DB_NAME` configuram tanto o backend quanto o PostgreSQL.
+   `DB_HOST` deve ser `localhost` quando a API roda fora do Docker; dentro de outro container da
+   mesma rede Compose, use `postgres`.
+
+2. **Suba o PostgreSQL:**
+   ```bash
+   docker compose up -d
+   ```
+   Variáveis adicionais: `DB_HOST`, `DB_PORT` e `BUSINESS_TZ`.
 
 3. **Instale as dependências Python:**
    ```bash

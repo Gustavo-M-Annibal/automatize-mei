@@ -3,10 +3,17 @@ from backend.app.services.produto_service import EstoqueInsuficienteError, Produ
 from fastapi import Depends, FastAPI, HTTPException, status
 from sqlalchemy.orm import Session
 
+<<<<<<< HEAD
 from app.core.deps import obter_usuario_atual
 from app.models.produto_model import ProdutoModel
 from app.models.fechamento_model import FechamentoModel
 from app.repositories.usuario_repository import UsuarioRepository
+=======
+from backend.app.core.deps import obter_usuario_atual
+from backend.app.models.produto_model import ProdutoModel as Produto
+from backend.app.models.fechamento_model import FechamentoModel
+from backend.app.repositories.usuario_repository import UsuarioRepository
+>>>>>>> 05c938183e50b46cab343d842890547ca7aae7ed
 from database.connection import Base, SessionLocal, engine
 
 # Cria as tabelas automaticamente caso não use Alembic

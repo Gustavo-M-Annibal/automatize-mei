@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session
-from app.models.usuario_model import UsuarioModel
+from backend.app.models.usuario_model import UsuarioModel
 
 
 class UsuarioRepository:
