@@ -69,17 +69,17 @@ def listar_produtos(db: Session = Depends(get_db), usuario_atual: str = Depends(
     return db.query(Produto).all()
 
 # Criação de produtos (Estoque)
-@app.post("/produtos/")
+@app.post("/produtos/", status_code=status.HTTP_201_CREATED)
 def criar_produto(dados: ProdutoCreate, db: Session = Depends(get_db)):
     service = ProdutoService(db)
-    return service.criar(dados)
+    return service.criar_produto(dados)
 
 # Atualização de produtos (Estoque)
 @app.put("/produtos/{produto_id}")
 def atualizar_produto(id: int, dados: ProdutoUpdate, db: Session = Depends(get_db)):
     service = ProdutoService(db)
     try:
-        return service.atualizar(id, dados)
+        return service.atualizar_produto(id, dados)
     except ProdutoNaoEncontradoError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     
@@ -88,7 +88,7 @@ def atualizar_produto(id: int, dados: ProdutoUpdate, db: Session = Depends(get_d
 def deletar_produto(id: int, db: Session = Depends(get_db)):
     service = ProdutoService(db)
     try:
-        service.deletar(id)
+        service.deletar_produto(id)
     except ProdutoNaoEncontradoError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except ValueError as e:
@@ -99,7 +99,7 @@ def deletar_produto(id: int, db: Session = Depends(get_db)):
 def registrar_producao(produto_id: int, dados: ProdutoMovimentacaoEstoque, db: Session = Depends(get_db)):
     service = ProdutoService(db)
     try:
-        return service.incrementar_producao(produto_id, dados.quantidade)
+        return service.registrar_producao(produto_id, dados.quantidade)
     except ProdutoNaoEncontradoError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     
@@ -108,7 +108,7 @@ def registrar_producao(produto_id: int, dados: ProdutoMovimentacaoEstoque, db: S
 def registrar_perda(produto_id: int, dados: ProdutoMovimentacaoEstoque, db: Session = Depends(get_db)):
     service = ProdutoService(db)
     try:
-        return service.decrementar_perda(produto_id, dados.quantidade)
+        return service.registrar_perda(produto_id, dados.quantidade)
     except ProdutoNaoEncontradoError as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
     except EstoqueInsuficienteError as e:
@@ -121,12 +121,12 @@ def registrar_venda(dados: dict, db: Session = Depends(get_db), usuario: str = D
 
 
 # Registro em Despesas
-@app.post("/despesas/")
+@app.post("/despesas/", status_code=status.HTTP_201_CREATED)
 def registrar_despesa(dados: dict, db: Session = Depends(get_db), usuario: str = Depends(obter_usuario_atual)):
     return {'mensagem': 'Despesa registrada com sucesso', 'dados': dados, 'usuario': usuario}
 
 
 # Listagem de Fechamentos
-@app.get("/fechamentos/")
-def listar_fechamentos(db: Session = Depends(get_db), usuario: str = Depends(obter_usuario_atual)):
+@app.get("/fechamentos/", status_code=status.HTTP_200_OK)
+def calcular_preco_total(db: Session = Depends(get_db), usuario: str = Depends(obter_usuario_atual)):
     return db.query(FechamentoModel).all()

@@ -37,10 +37,10 @@ class ProdutoService:
             raise ProdutoNaoEncontradoError()
         return produto
 
-    def listar_todos(self) -> List[ProdutoModel]:
+    def listar_produtos(self) -> List[ProdutoModel]:
         return self.db.query(ProdutoModel).all()
 
-    def atualizar(self, produto_id: int, dados: ProdutoUpdate) -> ProdutoModel:
+    def atualizar_produto(self, produto_id: int, dados: ProdutoUpdate) -> ProdutoModel:
         produto = self.buscar_por_id(produto_id)
         
         update_data = dados.model_dump(exclude_unset=True)
@@ -51,7 +51,7 @@ class ProdutoService:
         self.db.refresh(produto)
         return produto
 
-    def deletar(self, produto_id: int) -> None:
+    def deletar_produto(self, produto_id: int) -> None:
         produto = self.buscar_por_id(produto_id)
         
         if hasattr(produto, "vendas") and produto.vendas:
@@ -60,7 +60,7 @@ class ProdutoService:
         self.db.delete(produto)
         self.db.commit()
 
-    def incrementar_producao(self, produto_id: int, quantidade: int) -> ProdutoModel:
+    def registrar_producao(self, produto_id: int, quantidade: int) -> ProdutoModel:
         produto = self.buscar_por_id(produto_id)
         
         if produto.estoque is not None:
@@ -69,7 +69,7 @@ class ProdutoService:
             self.db.refresh(produto)
         return produto
 
-    def decrementar_perda(self, produto_id: int, quantidade: int) -> ProdutoModel:
+    def registrar_perda(self, produto_id: int, quantidade: int) -> ProdutoModel:
         produto = self.buscar_por_id(produto_id)
         
         if produto.estoque is not None:
