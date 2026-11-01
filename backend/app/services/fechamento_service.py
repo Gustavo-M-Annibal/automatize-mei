@@ -4,7 +4,7 @@ from decimal import Decimal
 from sqlalchemy.orm import Session
 
 from backend.app.core.timezone import get_business_day
-from backend.app.models.fechamento_model import Fechamento
+from backend.app.models.fechamento_model import FechamentoModel as Fechamento
 from backend.app.repositories import fechamento_repository as repo
 from backend.app.schemas.fechamento_schema import FechamentoCreate
 

@@ -20,3 +20,6 @@ def get_day_utc_bounds(day: date) -> tuple[datetime, datetime]:
     start_local = _BRT.localize(datetime(day.year, day.month, day.day, 0, 0, 0))
     end_local = _BRT.localize(datetime(day.year, day.month, day.day, 23, 59, 59, 999999))
     return start_local.astimezone(timezone.utc), end_local.astimezone(timezone.utc)
+
+def agora_negocio() -> datetime:
+    return datetime.now(_BRT)

@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class VendaCreate(BaseModel):
@@ -12,6 +12,8 @@ class VendaCreate(BaseModel):
 
 
 class VendaRegistrada(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
     id: int
     produto_id: int
     quantidade: int
