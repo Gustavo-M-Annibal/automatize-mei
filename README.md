@@ -101,7 +101,50 @@ automatize-mei/
 
 ## Como executar
 
-> A ser preenchido conforme o desenvolvimento avança (instruções de setup do backend, do site e do app).
+### Backend
+
+**Pré-requisitos:** Docker, Python 3.11+
+
+1. **Crie o arquivo `.env`** copiando o exemplo e ajustando as variáveis:
+   ```bash
+   cp .env.example .env
+   ```
+   As variáveis `DB_USER`, `DB_PASSWORD` e `DB_NAME` configuram tanto o backend quanto o PostgreSQL.
+   `DB_HOST` deve ser `localhost` quando a API roda fora do Docker; dentro de outro container da
+   mesma rede Compose, use `postgres`.
+
+2. **Suba o PostgreSQL:**
+   ```bash
+   docker compose up -d
+   ```
+   Variáveis adicionais: `DB_HOST`, `DB_PORT` e `BUSINESS_TZ`.
+
+3. **Instale as dependências Python:**
+   ```bash
+   pip install -r backend/requirements.txt
+   ```
+
+4. **Execute as migrations** (cria as tabelas no banco):
+   ```bash
+   alembic upgrade head
+   ```
+
+5. **Inicie o servidor** (executa a partir da raiz do projeto):
+   ```bash
+   uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+   ```
+   A documentação interativa estará em `http://localhost:8000/docs`.
+
+6. **Rode os testes de integração:**
+   ```bash
+   pytest backend/tests/
+   ```
+
+> **Emulador Android:** o endereço padrão do app para alcançar a máquina host é `http://10.0.2.2:8000`.
+> Em dispositivos físicos, use o IP da máquina na rede local.
+
+> **Dados compartilhados:** a API não tem autenticação; todos os clientes que apontarem para a mesma
+> instância compartilham os mesmos dados.
 
 ## Status
 
