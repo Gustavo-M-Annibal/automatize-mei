@@ -2,9 +2,8 @@ from decimal import Decimal
 from typing import List, Optional
 from sqlalchemy.orm import Session
 
-from app.models.produto_model import ProdutoModel
-from app.schemas.produto_schema import ProdutoCreate, ProdutoUpdate
-
+from backend.app.models.produto_model import ProdutoModel
+from backend.app.schemas.produto_schema import ProdutoCreate, ProdutoUpdate
 # Exceções de Domínio
 
 class ProdutoNaoEncontradoError(ValueError):

@@ -8,11 +8,13 @@ from backend.app.models.produto_model import ProdutoModel as Produto
 from backend.app.models.fechamento_model import FechamentoModel
 from backend.app.repositories.usuario_repository import UsuarioRepository
 from database.connection import Base, SessionLocal, engine
+from backend.app.api.despesas import router as despesas_router
 
 # Cria as tabelas automaticamente caso não use Alembic
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Automatize MEI API", version="1.0.0")
+app.include_router(despesas_router)
 
 
 # Dependência para abrir e fechar a sessão com o banco a cada requisição
@@ -118,13 +120,6 @@ def registrar_perda(produto_id: int, dados: ProdutoMovimentacaoEstoque, db: Sess
 @app.post("/vendas/", status_code=status.HTTP_201_CREATED)
 def registrar_venda(dados: dict, db: Session = Depends(get_db), usuario: str = Depends(obter_usuario_atual)):
     return {'mensagem': 'Venda registrada com sucesso', 'dados': dados, 'usuario': usuario}
-
-
-# Registro em Despesas
-@app.post("/despesas/", status_code=status.HTTP_201_CREATED)
-def registrar_despesa(dados: dict, db: Session = Depends(get_db), usuario: str = Depends(obter_usuario_atual)):
-    return {'mensagem': 'Despesa registrada com sucesso', 'dados': dados, 'usuario': usuario}
-
 
 # Listagem de Fechamentos
 @app.get("/fechamentos/", status_code=status.HTTP_200_OK)
