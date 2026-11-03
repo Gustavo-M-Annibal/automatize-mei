@@ -7,7 +7,8 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 class DespesaCreate(BaseModel):
     categoria: str = Field(min_length=1, max_length=50)
-    valor: Decimal = Field(gt=0, max_digits=10, decimal_places=2)    data: datetime
+    valor: Decimal = Field(gt=0, max_digits=10, decimal_places=2)
+    data: datetime
     da_gaveta: bool
 
     @field_validator("categoria")
