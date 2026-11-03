@@ -1,12 +1,12 @@
 from database.connection import Base
-from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String
+from sqlalchemy import Column, Integer, Numeric, String
 
 
 class ProdutoModel(Base):
-  __tablename__ = "produto"
-  __table_args__ = {'extend_existing': True}
+    __tablename__ = "produtos"
+    __table_args__ = {"extend_existing": True}
 
-  id = Column(Integer, primary_key=True)
-  nome = Column(String, nullable=False)
-  preco = Column(Float, nullable=False)
-  estoque = Column(Integer, default=0)
+    id = Column(Integer, primary_key=True, index=True)
+    nome = Column(String(30), nullable=False)
+    preco = Column(Numeric(10, 2), nullable=False)
+    estoque = Column(Integer, nullable=False, default=0)

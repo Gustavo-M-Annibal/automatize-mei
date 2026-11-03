@@ -12,6 +12,13 @@ class DespesaRepository:
     def __init__(self, db: Session):
         self.db = db
 
+    def listar_todas(self) -> list[DespesaModel]:
+        return (
+            self.db.query(DespesaModel)
+            .order_by(DespesaModel.data, DespesaModel.id)
+            .all()
+        )
+
     def listar_do_dia(self, dia: date) -> list[DespesaModel]:
         inicio, fim = get_day_utc_bounds(dia)
 

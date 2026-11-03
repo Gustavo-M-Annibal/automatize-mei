@@ -46,11 +46,7 @@ def verificar_dia_aberto(db: Session, dia: date) -> None:
 
 
 def listar_despesas(db: Session):
-    dia_atual = get_business_day(agora_negocio())
-
-    repo = DespesaRepository(db)
-
-    return repo.listar_do_dia(dia_atual)
+    return DespesaRepository(db).listar_todas()
 
 
 def criar_despesa(db: Session, dados: DespesaCreate):

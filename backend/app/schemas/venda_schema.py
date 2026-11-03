@@ -8,7 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 class VendaCreate(BaseModel):
     produto_id: int = Field(gt=0)
     quantidade: int = Field(gt=0, le=1000)
-    forma_pagamento: Literal["dinheiro", "pix"]
+    forma_pagamento: Literal["dinheiro", "cartao"]
 
 
 class VendaRegistrada(BaseModel):
