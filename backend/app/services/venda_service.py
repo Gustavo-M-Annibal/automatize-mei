@@ -100,3 +100,33 @@ def _explicar_falha(db: Session, produto_id: int, solicitado: int) -> NoReturn:
     if estoque is None:
         raise ProdutoNaoEncontradoError(produto_id)
     raise EstoqueInsuficienteError(produto_id, solicitado, estoque)
+
+
+class VendaNaoEncontradaError(Exception):
+    def __init__(self, venda_id: int):
+        self.venda_id = venda_id
+        super().__init__(f"Venda {venda_id} não encontrada.")
+
+
+def listar_vendas(db: Session) -> list:
+    from backend.app.models.venda_model import VendaModel
+    return db.query(VendaModel).order_by(VendaModel.data).all()
+
+
+def cancelar_venda(db: Session, venda_id: int) -> None:
+    from backend.app.repositories.venda_repository import VendaRepository
+    from backend.app.services.fechamento_service import DiaJaFechadoError
+
+    repo = VendaRepository(db)
+    venda = repo.buscar_por_id(venda_id)
+    if not venda:
+        raise VendaNaoEncontradaError(venda_id)
+    db.execute(
+        text(f"UPDATE {TABELA_PRODUTOS} SET estoque = estoque + :qtd WHERE id = :id"),
+        {"qtd": venda.quantidade, "id": venda.produto_id},
+    )
+    try:
+        repo.deletar(venda)
+    except DiaJaFechadoError:
+        db.rollback()
+        raise
