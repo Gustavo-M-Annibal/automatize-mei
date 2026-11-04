@@ -13,7 +13,19 @@ class ProducaoCreate(BaseModel):
     quantidade: int = Field(gt=0)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    summary="Registrar produção",
+    description=(
+        "Registra uma entrada de produção para um produto e incrementa seu estoque pela quantidade informada. "
+        "Retorna o registro criado com id, produto_id, quantidade e data."
+    ),
+    responses={
+        404: {"description": "Produto não encontrado."},
+        422: {"description": "Dados inválidos (produto_id ou quantidade inválidos)."},
+    },
+)
 def registrar_producao(dados: ProducaoCreate, db: Session = Depends(get_db)):
     try:
         producao = producao_service.registrar(db, dados.produto_id, dados.quantidade)

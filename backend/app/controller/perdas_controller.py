@@ -13,7 +13,21 @@ class PerdaCreate(BaseModel):
     quantidade: int = Field(gt=0)
 
 
-@router.post("", status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    status_code=status.HTTP_201_CREATED,
+    summary="Registrar perda",
+    description=(
+        "Registra uma perda de estoque para um produto e decrementa seu estoque pela quantidade informada. "
+        "Retorna 400 se o estoque disponível for menor que a quantidade solicitada. "
+        "Retorna o registro criado com id, produto_id, quantidade e data."
+    ),
+    responses={
+        400: {"description": "Estoque insuficiente para registrar a perda."},
+        404: {"description": "Produto não encontrado."},
+        422: {"description": "Dados inválidos (produto_id ou quantidade inválidos)."},
+    },
+)
 def registrar_perda(dados: PerdaCreate, db: Session = Depends(get_db)):
     try:
         perda = perda_service.registrar(db, dados.produto_id, dados.quantidade)

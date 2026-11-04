@@ -1,13 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app.api.auth import router as auth_router
-from backend.app.api.produtos import router as produtos_router
-from backend.app.api.vendas import router as vendas_router
-from backend.app.api.despesas import router as despesas_router
-from backend.app.api.fechamentos import router as fechamentos_router
-from backend.app.api.producoes import router as producoes_router
-from backend.app.api.perdas import router as perdas_router
+from backend.app.controller.auth_controller import router as auth_router
+from backend.app.controller.produtos_controller import router as produtos_router
+from backend.app.controller.vendas_controller import router as vendas_router
+from backend.app.controller.despesas_controller import router as despesas_router
+from backend.app.controller.fechamentos_controller import router as fechamentos_router
+from backend.app.controller.producoes_controller import router as producoes_router
+from backend.app.controller.perdas_controller import router as perdas_router
 
 app = FastAPI(title="Automatize MEI API", version="2.0.0")
 
