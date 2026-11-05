@@ -1,3 +1,7 @@
+import os
+
+os.environ.setdefault("SECRET_KEY", "chave-somente-para-testes-0123456789-abcdefghij")
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event

@@ -40,3 +40,9 @@ class UsuarioResponse(BaseModel):
     nome: str
     email: str
     cargo: str
+
+class TokenResponse(BaseModel):
+    """Resposta do login: o token JWT e o tipo (sempre "bearer")."""
+
+    access_token: str
+    token_type: str = "bearer"

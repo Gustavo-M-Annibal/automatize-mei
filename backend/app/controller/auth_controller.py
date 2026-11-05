@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from backend.app.core.db import get_db
 from backend.app.core.security import criar_access_token
-from backend.app.schemas.usuario_schema import UsuarioCreate, UsuarioResponse
+from backend.app.schemas.usuario_schema import TokenResponse, UsuarioCreate, UsuarioResponse
 from backend.app.services import usuario_service
 
 router = APIRouter(prefix="/auth", tags=["Autenticação"])
@@ -35,6 +35,7 @@ def registrar(dados: UsuarioCreate, db: Session = Depends(get_db)):
 
 @router.post(
     "/login",
+    response_model=TokenResponse,
     summary="Autenticar usuário",
     description=(
         "Autentica o usuário com e-mail (campo username) e senha. "
