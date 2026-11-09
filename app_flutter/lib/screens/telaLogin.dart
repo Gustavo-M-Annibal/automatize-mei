@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import '../widgets/api.dart';
-import '../widgets/estado.dart';
-import 'inicio.dart';
+
+import 'cadastro_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -16,7 +15,6 @@ class _LoginPageState extends State<LoginPage> {
   final _senhaController = TextEditingController();
   bool _mostrarSenha = false;
   bool _lembrarAcesso = true;
-  bool _carregando = false;
 
   static const _marinho = Color(0xFF112B46);
   static const _verde = Color(0xFF167C62);
@@ -45,96 +43,15 @@ class _LoginPageState extends State<LoginPage> {
       );
   }
 
-  Future<void> _entrar() async {
-    if (_carregando) return;
+  void _entrar() {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _carregando = true);
-    try {
-      await Escopo.de(context).autenticar(
-        _emailController.text.trim(),
-        _senhaController.text,
-        lembrar: _lembrarAcesso,
-      );
-      if (mounted) _mostrarAviso('Acesso realizado com sucesso.');
-    } on ApiErro catch (erro) {
-      if (!mounted) return;
-      final mensagem = switch (erro.statusCode) {
-        400 => 'E-mail ou senha incorretos.',
-        401 => 'Não foi possível validar sua sessão. Entre novamente.',
-        422 => 'Confira o e-mail e a senha informados.',
-        _ => erro.mensagem,
-      };
-      _mostrarAviso(mensagem);
-    } catch (_) {
-      if (mounted) _mostrarAviso('Não foi possível entrar. Tente novamente.');
-    } finally {
-      if (mounted) setState(() => _carregando = false);
-    }
+    _mostrarAviso('Protótipo visual: o acesso ainda não está conectado.');
   }
 
-  Future<void> _usarLocal() async {
-    if (_carregando) return;
-    setState(() => _carregando = true);
-    try {
-      await Escopo.de(context).usarLocal();
-    } catch (_) {
-      if (mounted) _mostrarAviso('Não foi possível abrir os dados locais.');
-    } finally {
-      if (mounted) setState(() => _carregando = false);
-    }
-  }
-
-  Future<void> _configurarApi() async {
-    final estado = Escopo.de(context);
-    final controlador = TextEditingController(text: estado.api.baseUrl);
-    final formulario = GlobalKey<FormState>();
-    await showDialog<void>(
-      context: context,
-      builder: (contexto) => AlertDialog(
-        title: const Text('Endereço do servidor'),
-        content: Form(
-          key: formulario,
-          child: TextFormField(
-            controller: controlador,
-            keyboardType: TextInputType.url,
-            decoration: const InputDecoration(
-              labelText: 'URL da API',
-              hintText: 'https://api.exemplo.com',
-              border: OutlineInputBorder(),
-            ),
-            validator: (valor) {
-              final uri = Uri.tryParse((valor ?? '').trim());
-              if (uri == null ||
-                  !{'http', 'https'}.contains(uri.scheme) ||
-                  uri.host.isEmpty) {
-                return 'Informe uma URL http ou https válida.';
-              }
-              return null;
-            },
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(contexto),
-            child: const Text('Cancelar'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              if (!formulario.currentState!.validate()) return;
-              try {
-                await estado.configurarUrlApi(controlador.text);
-                if (contexto.mounted) Navigator.pop(contexto);
-                if (mounted) _mostrarAviso('Endereço da API salvo.');
-              } catch (_) {
-                if (mounted) _mostrarAviso('Não foi possível salvar o endereço.');
-              }
-            },
-            child: const Text('Salvar'),
-          ),
-        ],
-      ),
+  void _irParaCadastro() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const CadastroPage()),
     );
-    controlador.dispose();
   }
 
   @override
@@ -228,7 +145,6 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 9),
               TextFormField(
                 controller: _emailController,
-                enabled: !_carregando,
                 keyboardType: TextInputType.emailAddress,
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.email],
@@ -251,7 +167,6 @@ class _LoginPageState extends State<LoginPage> {
               const SizedBox(height: 9),
               TextFormField(
                 controller: _senhaController,
-                enabled: !_carregando,
                 obscureText: !_mostrarSenha,
                 textInputAction: TextInputAction.done,
                 autofillHints: const [AutofillHints.password],
@@ -288,7 +203,7 @@ class _LoginPageState extends State<LoginPage> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(5),
                       ),
-                        onChanged: _carregando ? null : (valor) =>
+                      onChanged: (valor) =>
                           setState(() => _lembrarAcesso = valor ?? false),
                     ),
                   ),
@@ -321,7 +236,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(
                 height: 54,
                 child: FilledButton(
-                  onPressed: _carregando ? null : _entrar,
+                  onPressed: _entrar,
                   style: FilledButton.styleFrom(
                     backgroundColor: _verde,
                     foregroundColor: Colors.white,
@@ -333,34 +248,15 @@ class _LoginPageState extends State<LoginPage> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  child: _carregando
-                      ? const SizedBox.square(
-                          dimension: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
-                            color: Colors.white,
-                          ),
-                        )
-                      : const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text('Entrar na minha conta'),
-                            SizedBox(width: 9),
-                            Icon(Icons.arrow_forward_rounded, size: 19),
-                          ],
-                        ),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('Entrar na minha conta'),
+                      SizedBox(width: 9),
+                      Icon(Icons.arrow_forward_rounded, size: 19),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              TextButton.icon(
-                onPressed: _carregando ? null : _configurarApi,
-                icon: const Icon(Icons.settings_ethernet_rounded, size: 18),
-                label: const Text('Configurar endereço do servidor'),
-              ),
-              TextButton.icon(
-                onPressed: _carregando ? null : _usarLocal,
-                icon: const Icon(Icons.cloud_off_rounded, size: 18),
-                label: const Text('Continuar sem servidor (modo local)'),
               ),
               const SizedBox(height: 25),
               const Row(
@@ -378,9 +274,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 12),
               OutlinedButton(
-                onPressed: () => _mostrarAviso(
-                  'Cadastro ainda não disponível neste protótipo.',
-                ),
+                onPressed: _irParaCadastro,
                 style: OutlinedButton.styleFrom(
                   foregroundColor: _marinho,
                   side: const BorderSide(color: Color(0xFFDCE3DF)),
