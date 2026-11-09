@@ -14,3 +14,4 @@ class FechamentoModel(Base):
   saidas_gaveta = Column(Numeric(10, 2), nullable=False, default=0)
   contado_dinheiro = Column(Numeric(10, 2), nullable=False, default=0)
   total_cartao = Column(Numeric(10, 2), nullable=False, default=0)
+  total_pix = Column(Numeric(10, 2), nullable=False, default=0)

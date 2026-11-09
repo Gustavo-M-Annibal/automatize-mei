@@ -156,6 +156,8 @@ class DiaPage extends StatelessWidget {
                           cor: Forma.dinheiro.cor),
                       Pilula(Forma.cartao.icone, brl(s.cartaoDoDia(dia)),
                           cor: Forma.cartao.cor),
+                        Pilula(Forma.pix.icone, brl(s.pixDoDia(dia)),
+                          cor: Forma.pix.cor),
                     ]),
                   ]),
             ),

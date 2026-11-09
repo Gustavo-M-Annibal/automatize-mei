@@ -529,17 +529,29 @@ void configurarConexao(BuildContext context, Estado s) {
       ),
       actions: [
         TextButton(
+          onPressed: () async {
+            Navigator.pop(ctx);
+            await s.sair();
+          },
+          child: const Text('Sair da conta'),
+        ),
+        TextButton(
             onPressed: () => Navigator.pop(ctx), child: const Text('Fechar')),
         FilledButton(
           onPressed: () async {
             Navigator.pop(ctx);
             try {
-              await s.conectar(c.text);
+              if (s.local) {
+                await s.configurarUrlApi(c.text);
+                await s.sair();
+              } else {
+                await s.conectar(c.text);
+              }
             } catch (e) {
               if (context.mounted) aviso(context, msgErro(e));
             }
           },
-          child: const Text('Conectar'),
+          child: Text(s.local ? 'Entrar no servidor' : 'Conectar'),
         ),
       ],
     ),
@@ -606,6 +618,10 @@ class _SemConexao extends StatelessWidget {
                   if (ok) await s.usarLocal();
                 },
                 child: const Text('Usar só neste aparelho'),
+              ),
+              TextButton(
+                onPressed: s.sair,
+                child: const Text('Sair da conta'),
               ),
             ]),
           ),

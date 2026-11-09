@@ -2,10 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.app.core.db import get_db
+from backend.app.core.deps import obter_usuario_atual
 from backend.app.schemas.produto_schema import ProdutoCreate, ProdutoResponse, ProdutoUpdate
 from backend.app.services.produto_service import ProdutoNaoEncontradoError, ProdutoService
 
-router = APIRouter(prefix="/produtos", tags=["Produtos"])
+router = APIRouter(
+    prefix="/produtos",
+    tags=["Produtos"],
+    dependencies=[Depends(obter_usuario_atual)],
+)
 
 
 @router.get(

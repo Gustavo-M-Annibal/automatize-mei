@@ -38,6 +38,7 @@ def criar_fechamento(db: Session, body: FechamentoCreate) -> Fechamento:
         saidas_gaveta=totais["saidas_gaveta"],
         contado_dinheiro=body.contado_dinheiro,
         total_cartao=totais["total_cartao"],
+        total_pix=totais["total_pix"],
     )
 
 

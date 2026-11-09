@@ -3,9 +3,14 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.app.core.db import get_db
+from backend.app.core.deps import obter_usuario_atual
 from backend.app.services import perda_service
 
-router = APIRouter(prefix="/perdas", tags=["Perdas"])
+router = APIRouter(
+    prefix="/perdas",
+    tags=["Perdas"],
+    dependencies=[Depends(obter_usuario_atual)],
+)
 
 
 class PerdaCreate(BaseModel):

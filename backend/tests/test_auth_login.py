@@ -16,6 +16,7 @@ from backend.app.core import security
 from backend.app.core.db import get_db
 from backend.app.core.deps import obter_usuario_atual
 from backend.app.main import app
+from backend.app.models.produto_model import ProdutoModel
 from backend.app.models.usuario_model import UsuarioModel
 from database.connection import Base
 
@@ -30,6 +31,7 @@ def ctx():
     # rotas (que rodam em outra thread) enxergariam um banco vazio.
     engine = create_engine("sqlite://", connect_args={"check_same_thread": False}, poolclass=StaticPool)
     UsuarioModel.__table__.create(bind=engine)
+    ProdutoModel.__table__.create(bind=engine)
     Sessao = sessionmaker(bind=engine, autoflush=False)
 
     def override_get_db():
@@ -96,6 +98,18 @@ def test_token_funciona_em_rota_protegida(ctx):
 
     assert protegida.get("/protegida").status_code == 401
     assert protegida.get("/protegida", headers={"Authorization": "Bearer lixo"}).status_code == 401
+
+
+def test_rotas_de_dados_exigem_token(ctx):
+    client, _ = ctx
+    rotas = ("/produtos", "/vendas", "/despesas", "/fechamentos")
+
+    for rota in rotas:
+        assert client.get(rota).status_code == 401
+
+    token = _login(client).json()["access_token"]
+    resposta = client.get("/produtos", headers={"Authorization": f"Bearer {token}"})
+    assert resposta.status_code == 200
 
 
 def test_token_expirado_e_rejeitado(ctx):

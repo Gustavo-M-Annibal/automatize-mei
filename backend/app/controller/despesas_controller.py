@@ -3,11 +3,16 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.app.core.db import get_db
+from backend.app.core.deps import obter_usuario_atual
 from backend.app.schemas.despesa_schema import DespesaCreate, DespesaResponse
 from backend.app.services import despesa_service as service
 from backend.app.services.fechamento_service import DiaJaFechadoError
 
-router = APIRouter(prefix="/despesas", tags=["Despesas"])
+router = APIRouter(
+    prefix="/despesas",
+    tags=["Despesas"],
+    dependencies=[Depends(obter_usuario_atual)],
+)
 
 
 @router.get(

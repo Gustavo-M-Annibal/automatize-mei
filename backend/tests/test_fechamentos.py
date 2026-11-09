@@ -1,5 +1,15 @@
 """Testes de integração dos endpoints de fechamento."""
 
+import pytest
+
+from backend.app.core.security import criar_access_token
+
+
+@pytest.fixture(autouse=True)
+def autenticar_cliente(client):
+    token = criar_access_token(data={"sub": "teste@exemplo.com"})
+    client.headers.update({"Authorization": f"Bearer {token}"})
+
 
 FECHAMENTO_PAYLOAD = {
     "data": "2026-10-20T19:00:00-03:00",
@@ -24,6 +34,7 @@ def test_criar_fechamento_retorna_objeto_com_id(client):
     assert "vendas_dinheiro" in data
     assert "saidas_gaveta" in data
     assert "total_cartao" in data
+    assert data["total_pix"] == "0.00"
 
 
 def test_criar_fechamento_duplicado_retorna_409(client):

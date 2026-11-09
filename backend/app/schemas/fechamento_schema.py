@@ -27,6 +27,10 @@ class FechamentoCreate(BaseModel):
         default=None,
         description="Ignorado — o servidor recalcula a partir dos lançamentos.",
     )
+    total_pix: Optional[Decimal] = Field(
+        default=None,
+        description="Ignorado — o servidor recalcula a partir dos lançamentos.",
+    )
 
 
 class FechamentoResponse(BaseModel):
@@ -39,3 +43,4 @@ class FechamentoResponse(BaseModel):
     saidas_gaveta: Decimal = Field(description="Total de saídas da gaveta calculado pelo servidor.")
     contado_dinheiro: Decimal = Field(description="Valor contado fisicamente informado pelo operador.")
     total_cartao: Decimal = Field(description="Total no cartão calculado pelo servidor.")
+    total_pix: Decimal = Field(description="Total no Pix calculado pelo servidor.")

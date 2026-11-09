@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from backend.app.core.db import get_db
+from backend.app.core.deps import obter_usuario_atual
 from backend.app.schemas.fechamento_schema import FechamentoCreate, FechamentoResponse
 from backend.app.services import fechamento_service as service
 from backend.app.services.fechamento_service import (
@@ -9,7 +10,10 @@ from backend.app.services.fechamento_service import (
     FechamentoNaoEncontradoError,
 )
 
-router = APIRouter(tags=["Fechamentos"])
+router = APIRouter(
+    tags=["Fechamentos"],
+    dependencies=[Depends(obter_usuario_atual)],
+)
 
 
 @router.get(
@@ -32,7 +36,7 @@ def listar_fechamentos(db: Session = Depends(get_db)):
     summary="Fechar o caixa do dia",
     description=(
         "Registra o fechamento do dia civil informado em `data` (fuso America/Sao_Paulo). "
-        "Os totais de `vendas_dinheiro`, `saidas_gaveta` e `total_cartao` são recalculados "
+        "Os totais de `vendas_dinheiro`, `saidas_gaveta`, `total_cartao` e `total_pix` são recalculados "
         "pelo servidor a partir dos lançamentos existentes — os valores enviados pelo app são "
         "ignorados para esses campos. "
         "Após o fechamento, vendas, cancelamentos e despesas da gaveta daquele dia ficam bloqueados."

@@ -55,9 +55,13 @@ class RepoApi implements Repo {
     var fechamentos = <Fechamento>[];
     try {
       despesas = _lista(await api.get('/despesas'), Despesa.fromJson);
+    } on ApiErro catch (erro) {
+      if (erro.statusCode == 401) rethrow;
     } catch (_) {}
     try {
       fechamentos = _lista(await api.get('/fechamentos'), Fechamento.fromJson);
+    } on ApiErro catch (erro) {
+      if (erro.statusCode == 401) rethrow;
     } catch (_) {}
     return Dados(
         produtos: produtos,
@@ -154,6 +158,7 @@ class RepoApi implements Repo {
       saidas: f.saidas,
       contado: f.contado,
       cartao: f.cartao,
+      pix: f.pix,
     );
   }
 
@@ -276,6 +281,7 @@ class RepoLocal implements Repo {
         saidas: f.saidas,
         contado: f.contado,
         cartao: f.cartao,
+        pix: f.pix,
       );
 
   @override
@@ -306,18 +312,24 @@ class RepoLocal implements Repo {
       final n = 10 + rnd.nextInt(8);
       var dinheiro = 0.0;
       var cartao = 0.0;
+      var pix = 0.0;
       for (var i = 0; i < n; i++) {
         const picos = [11, 12, 12, 12, 13, 16, 17, 17, 17, 18];
         var h = picos[rnd.nextInt(picos.length)];
         if (d == 0 && h > agora.hour) h = max(7, agora.hour);
         final p = produtos[rnd.nextInt(produtos.length)];
         final q = 1 + rnd.nextInt(3);
-        final f = rnd.nextInt(10) < 3 ? Forma.cartao : Forma.dinheiro;
+        final sorteio = rnd.nextInt(10);
+        final f = sorteio < 3
+            ? Forma.cartao
+            : (sorteio < 5 ? Forma.pix : Forma.dinheiro);
         final v = cent(p.preco * q);
         if (f == Forma.dinheiro) {
           dinheiro += v;
-        } else {
+        } else if (f == Forma.cartao) {
           cartao += v;
+        } else {
+          pix += v;
         }
         vendas.add(Venda(
           id: _id(),
@@ -347,6 +359,7 @@ class RepoLocal implements Repo {
           saidas: saidas,
           contado: cent(20 + dinheiro - saidas),
           cartao: cent(cartao),
+          pix: cent(pix),
         ));
       }
     }

@@ -23,7 +23,7 @@ def buscar_por_id(db: Session, fechamento_id: int) -> Fechamento | None:
 
 
 def calcular_totais_dia(db: Session, data_dia: date) -> dict:
-  """Recalcula vendas_dinheiro, total_cartao e saidas_gaveta do dia a partir dos registros."""
+  """Recalcula os totais por forma de pagamento e as saídas da gaveta."""
   inicio, fim = get_day_utc_bounds(data_dia)
 
   vendas_dinheiro = (
@@ -46,6 +46,16 @@ def calcular_totais_dia(db: Session, data_dia: date) -> dict:
       .scalar()
   )
 
+  total_pix = (
+      db.query(func.coalesce(func.sum(Venda.valor), 0))
+      .filter(
+          Venda.data >= inicio,
+          Venda.data <= fim,
+          Venda.forma_pagamento == "pix",
+      )
+      .scalar()
+  )
+
   saidas_gaveta = (
       db.query(func.coalesce(func.sum(Despesa.valor), 0))
       .filter(
@@ -57,6 +67,7 @@ def calcular_totais_dia(db: Session, data_dia: date) -> dict:
   return {
       "vendas_dinheiro": Decimal(str(vendas_dinheiro)),
       "total_cartao": Decimal(str(total_cartao)),
+      "total_pix": Decimal(str(total_pix)),
       "saidas_gaveta": Decimal(str(saidas_gaveta)),
   }
 
@@ -70,6 +81,7 @@ def criar(
     saidas_gaveta: Decimal,
     contado_dinheiro: Decimal,
     total_cartao: Decimal,
+    total_pix: Decimal = Decimal("0.00"),
 ) -> Fechamento:
   fechamento = Fechamento(
       data=data,
@@ -79,6 +91,7 @@ def criar(
       saidas_gaveta=saidas_gaveta,
       contado_dinheiro=contado_dinheiro,
       total_cartao=total_cartao,
+      total_pix=total_pix,
   )
   db.add(fechamento)
   db.commit()

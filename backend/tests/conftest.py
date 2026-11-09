@@ -6,6 +6,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from database.connection import Base
 from backend.app.main import app
@@ -17,6 +18,7 @@ SQLALCHEMY_TEST_URL = "sqlite:///:memory:"
 engine = create_engine(
     SQLALCHEMY_TEST_URL,
     connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
 )
 
 # Habilita suporte a chaves estrangeiras no SQLite

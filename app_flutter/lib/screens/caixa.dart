@@ -300,7 +300,8 @@ class _CaixaFechado extends StatelessWidget {
             LinhaValor(st.icone, 'Diferença', dif == 0 ? 'Bateu certinho' : brl(dif / 100), cor: st.txt),
             const Padding(padding: EdgeInsets.symmetric(vertical: 6), child: Divider(color: Cores.linha, height: 1)),
             LinhaValor(Icons.credit_card_rounded, 'Cartão', brl(f.cartao)),
-            LinhaValor(Icons.receipt_long_rounded, 'Total vendido', brl(f.dinheiro + f.cartao)),
+            LinhaValor(Forma.pix.icone, 'Pix', brl(f.pix)),
+            LinhaValor(Icons.receipt_long_rounded, 'Total vendido', brl(f.dinheiro + f.cartao + f.pix)),
             LinhaValor(
               Icons.savings_outlined,
               'Para guardar',

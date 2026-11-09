@@ -49,18 +49,34 @@ String brl(double v) {
 double _num(dynamic x) => (x as num?)?.toDouble() ?? 0;
 
 /// Como o cliente pagou. Só o dinheiro entra na conferência da gaveta.
-enum Forma { dinheiro, cartao }
+enum Forma { dinheiro, cartao, pix }
 
 extension FormaX on Forma {
-  String get rotulo => this == Forma.dinheiro ? 'Dinheiro' : 'Cartão';
-  IconData get icone => this == Forma.dinheiro ? Icons.payments_rounded : Icons.credit_card_rounded;
-  Color get cor => this == Forma.dinheiro ? const Color(0xFF12A36E) : const Color(0xFF2F6FEB);
-  String get api => this == Forma.dinheiro ? 'dinheiro' : 'cartao';
+  String get rotulo => switch (this) {
+        Forma.dinheiro => 'Dinheiro',
+        Forma.cartao => 'Cartão',
+        Forma.pix => 'Pix',
+      };
+  IconData get icone => switch (this) {
+        Forma.dinheiro => Icons.payments_rounded,
+        Forma.cartao => Icons.credit_card_rounded,
+        Forma.pix => Icons.qr_code_rounded,
+      };
+  Color get cor => switch (this) {
+        Forma.dinheiro => const Color(0xFF12A36E),
+        Forma.cartao => const Color(0xFF2F6FEB),
+        Forma.pix => const Color(0xFF007C91),
+      };
+  String get api => name;
 }
 
 Forma formaDe(String? s) {
   final v = (s ?? '').toLowerCase();
-  return (v.startsWith('cart') || v.contains('credito') || v.contains('debito')) ? Forma.cartao : Forma.dinheiro;
+  if (v == 'pix') return Forma.pix;
+  if (v.startsWith('cart') || v.contains('credito') || v.contains('debito')) {
+    return Forma.cartao;
+  }
+  return Forma.dinheiro;
 }
 
 enum Categoria { ingredientes, embalagem, gas, outros }
@@ -184,6 +200,7 @@ class Fechamento {
   final double saidas; // gastos pagos com dinheiro da gaveta
   final double contado; // dinheiro contado no fim do dia
   final double cartao; // vendas no cartão (não entra na gaveta)
+  final double pix; // vendas recebidas por Pix
 
   Fechamento({
     this.id,
@@ -193,6 +210,7 @@ class Fechamento {
     required this.saidas,
     required this.contado,
     required this.cartao,
+    required this.pix,
   });
 
   double get esperado => cent(troco + dinheiro - saidas);
@@ -206,6 +224,7 @@ class Fechamento {
         saidas: _num(m['saidas_gaveta']),
         contado: _num(m['contado_dinheiro']),
         cartao: _num(m['total_cartao']),
+        pix: _num(m['total_pix']),
       );
 
   Map<String, dynamic> toJson() => {
@@ -216,5 +235,6 @@ class Fechamento {
         'saidas_gaveta': saidas,
         'contado_dinheiro': contado,
         'total_cartao': cartao,
+        'total_pix': pix,
       };
 }

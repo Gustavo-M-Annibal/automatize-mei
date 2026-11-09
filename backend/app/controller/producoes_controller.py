@@ -3,9 +3,14 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from backend.app.core.db import get_db
+from backend.app.core.deps import obter_usuario_atual
 from backend.app.services import producao_service
 
-router = APIRouter(prefix="/producoes", tags=["Produções"])
+router = APIRouter(
+    prefix="/producoes",
+    tags=["Produções"],
+    dependencies=[Depends(obter_usuario_atual)],
+)
 
 
 class ProducaoCreate(BaseModel):

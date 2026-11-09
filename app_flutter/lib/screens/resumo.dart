@@ -36,7 +36,12 @@ class _ResumoPageState extends State<ResumoPage> {
     final dinheiro = cent(vendas
         .where((v) => v.forma == Forma.dinheiro)
         .fold(0.0, (a, v) => a + v.valor));
-    final cartaoV = cent(vendido - dinheiro);
+    final cartaoV = cent(vendas
+      .where((v) => v.forma == Forma.cartao)
+      .fold(0.0, (a, v) => a + v.valor));
+    final pix = cent(vendas
+      .where((v) => v.forma == Forma.pix)
+      .fold(0.0, (a, v) => a + v.valor));
 
     final porProduto = <int, int>{};
     final porHora = <int, int>{};
@@ -160,7 +165,7 @@ class _ResumoPageState extends State<ResumoPage> {
             ),
           ]),
           const SizedBox(height: 12),
-          _CartaoPagamento(dinheiro: dinheiro, cartao: cartaoV),
+          _FormasPagamento(dinheiro: dinheiro, cartao: cartaoV, pix: pix),
           if (horaPico != null) ...[
             const SizedBox(height: 12),
             Container(
@@ -379,15 +384,22 @@ class _Seletor extends StatelessWidget {
   }
 }
 
-class _CartaoPagamento extends StatelessWidget {
+class _FormasPagamento extends StatelessWidget {
   final double dinheiro;
   final double cartao;
-  const _CartaoPagamento({required this.dinheiro, required this.cartao});
+  final double pix;
+  const _FormasPagamento({
+    required this.dinheiro,
+    required this.cartao,
+    required this.pix,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final total = dinheiro + cartao;
+    final total = dinheiro + cartao + pix;
     final fd = total == 0 ? 50 : (dinheiro / total * 100).round();
+    final fc = total == 0 ? 0 : (cartao / total * 100).round();
+    final fp = total == 0 ? 0 : 100 - fd - fc;
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
       decoration: cartaoDeco(),
@@ -403,8 +415,11 @@ class _CartaoPagamento extends StatelessWidget {
                         flex: math.max(fd, 1),
                         child: Container(color: Forma.dinheiro.cor)),
                     Expanded(
-                        flex: math.max(100 - fd, 1),
+                    flex: math.max(fc, 1),
                         child: Container(color: Forma.cartao.cor)),
+                  Expanded(
+                    flex: math.max(fp, 1),
+                    child: Container(color: Forma.pix.cor)),
                   ]),
           ),
         ),
@@ -412,7 +427,9 @@ class _CartaoPagamento extends StatelessWidget {
         LinhaValor(Forma.dinheiro.icone, 'Dinheiro', brl(dinheiro),
             nota: total == 0 ? null : '$fd% das vendas'),
         LinhaValor(Forma.cartao.icone, 'Cartão', brl(cartao),
-            nota: total == 0 ? null : '${100 - fd}% das vendas'),
+          nota: total == 0 ? null : '$fc% das vendas'),
+        LinhaValor(Forma.pix.icone, 'Pix', brl(pix),
+          nota: total == 0 ? null : '$fp% das vendas'),
       ]),
     );
   }

@@ -2,11 +2,16 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from backend.app.core.db import get_db
+from backend.app.core.deps import obter_usuario_atual
 from backend.app.schemas.venda_schema import VendaCreate, VendaRegistrada
 from backend.app.services import venda_service
 from backend.app.services.fechamento_service import DiaJaFechadoError
 
-router = APIRouter(prefix="/vendas", tags=["Vendas"])
+router = APIRouter(
+    prefix="/vendas",
+    tags=["Vendas"],
+    dependencies=[Depends(obter_usuario_atual)],
+)
 
 
 @router.get(

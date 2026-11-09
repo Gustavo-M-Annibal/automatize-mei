@@ -25,32 +25,37 @@ class _VenderPageState extends State<VenderPage> {
     setState(() => novo == 0 ? carrinho.remove(p) : carrinho[p] = novo);
   }
 
-  /// Pergunta como o cliente pagou: dois botões grandes, só ícone e uma palavra.
+  /// Pergunta como o cliente pagou com três opções grandes e alinhadas.
   Future<Forma?> _perguntarForma() {
     final valor = total;
     return mostrarFolha<Forma>(
       context,
-      (ctx) => Padding(
-        padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
-        child: Column(mainAxisSize: MainAxisSize.min, children: [
-          const Text('Como pagou?',
-              style: TextStyle(
-                  fontSize: 18,
-                  color: Cores.suave,
-                  fontWeight: FontWeight.w700)),
-          const SizedBox(height: 4),
-          Text(brl(valor),
-              style: const TextStyle(
-                  fontSize: 44,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: -1.8)),
-          const SizedBox(height: 22),
-          Row(children: const [
-            Expanded(child: _OpcaoPagamento(Forma.dinheiro)),
-            SizedBox(width: 12),
-            Expanded(child: _OpcaoPagamento(Forma.cartao)),
+      (_) => SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+          child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Text('Como pagou?',
+                style: TextStyle(
+                    fontSize: 18,
+                    color: Cores.suave,
+                    fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            Text(brl(valor),
+                style: const TextStyle(
+                    fontSize: 44,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -1.8)),
+            const SizedBox(height: 22),
+            for (final forma in Forma.values) ...[
+              SizedBox(
+                width: double.infinity,
+                height: 82,
+                child: _OpcaoPagamento(forma),
+              ),
+              if (forma != Forma.values.last) const SizedBox(height: 12),
+            ],
           ]),
-        ]),
+        );
       ),
     );
   }
@@ -271,15 +276,19 @@ class _OpcaoPagamento extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
         onTap: () => Navigator.of(context).pop(forma),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 30),
-          child: Column(children: [
-            Icon(forma.icone, size: 56, color: Colors.white),
-            const SizedBox(height: 10),
-            Text(forma.rotulo,
-                style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white)),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Row(children: [
+            Icon(forma.icone, size: 42, color: Colors.white),
+            const SizedBox(width: 20),
+            Expanded(
+              child: Text(forma.rotulo,
+                  style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white)),
+            ),
+            const Icon(Icons.arrow_forward_rounded,
+                size: 24, color: Colors.white),
           ]),
         ),
       ),

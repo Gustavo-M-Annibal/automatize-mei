@@ -91,6 +91,21 @@ def test_listar_do_dia_traz_so_vendas_do_dia(db, monkeypatch):
     assert len(repo.listar_do_dia()) == 2                # sem argumento = hoje (fuso de negócio)
 
 
+def test_fechamento_separa_totais_de_dinheiro_cartao_e_pix(db):
+    db.add_all([
+        VendaModel(produto_id=1, quantidade=1, valor=Decimal("10.00"), forma_pagamento="dinheiro", data=_brt(DIA, 9)),
+        VendaModel(produto_id=1, quantidade=1, valor=Decimal("20.00"), forma_pagamento="cartao", data=_brt(DIA, 10)),
+        VendaModel(produto_id=1, quantidade=1, valor=Decimal("30.00"), forma_pagamento="pix", data=_brt(DIA, 11)),
+    ])
+    db.commit()
+
+    totais = fechamento_repository.calcular_totais_dia(db, DIA)
+
+    assert totais["vendas_dinheiro"] == Decimal("10.00")
+    assert totais["total_cartao"] == Decimal("20.00")
+    assert totais["total_pix"] == Decimal("30.00")
+
+
 def test_deletar_remove_a_venda(db, monkeypatch):
     _agora(monkeypatch, DIA)
     repo = VendaRepository(db)

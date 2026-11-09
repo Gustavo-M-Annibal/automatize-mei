@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
 class ApiErro implements Exception {
   final String mensagem;
-  ApiErro(this.mensagem);
+  final int? statusCode;
+  ApiErro(this.mensagem, {this.statusCode});
   @override
   String toString() => mensagem;
 }
@@ -12,13 +14,21 @@ class ApiErro implements Exception {
 /// No emulador Android o computador é 10.0.2.2; no iOS/desktop use localhost.
 class Api {
   String baseUrl;
-  String? token; // preenchido se o grupo implementar login com JWT
+  String? token;
+  Future<void> Function()? aoReceber401;
 
-  Api({this.baseUrl = 'http://10.0.2.2:8000'});
+  Api({String? baseUrl})
+      : baseUrl = baseUrl ??
+            (kIsWeb ? 'http://localhost:8000' : 'http://10.0.2.2:8000');
 
-  Map<String, String> get _cab => {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
+  Map<String, String> _cab({
+    required bool incluirToken,
+    required bool formulario,
+  }) => {
+        'Content-Type': formulario
+            ? 'application/x-www-form-urlencoded'
+            : 'application/json',
+        if (incluirToken && token != null) 'Authorization': 'Bearer $token',
       };
 
   String _mensagem(int codigo, dynamic json) {
@@ -38,10 +48,25 @@ class Api {
     }
   }
 
-  Future<dynamic> _enviar(String metodo, String caminho, [Object? corpo]) async {
+  Future<dynamic> _enviar(
+    String metodo,
+    String caminho, [
+    Object? corpo,
+  ], {
+    Map<String, String>? formulario,
+    bool incluirToken = true,
+  }) async {
     try {
-      final req = http.Request(metodo, Uri.parse('$baseUrl$caminho'))..headers.addAll(_cab);
-      if (corpo != null) req.body = jsonEncode(corpo);
+      final req = http.Request(metodo, Uri.parse('$baseUrl$caminho'));
+      req.headers.addAll(_cab(
+        incluirToken: incluirToken,
+        formulario: formulario != null,
+      ));
+      if (formulario != null) {
+        req.bodyFields = formulario;
+      } else if (corpo != null) {
+        req.body = jsonEncode(corpo);
+      }
       final streamed = await req.send().timeout(const Duration(seconds: 6));
       final r = await http.Response.fromStream(streamed);
       dynamic json;
@@ -53,7 +78,8 @@ class Api {
         }
       }
       if (r.statusCode >= 200 && r.statusCode < 300) return json;
-      throw ApiErro(_mensagem(r.statusCode, json));
+      if (r.statusCode == 401 && incluirToken) await aoReceber401?.call();
+      throw ApiErro(_mensagem(r.statusCode, json), statusCode: r.statusCode);
     } on ApiErro {
       rethrow;
     } catch (_) {
@@ -65,4 +91,21 @@ class Api {
   Future<dynamic> post(String caminho, Object corpo) => _enviar('POST', caminho, corpo);
   Future<dynamic> put(String caminho, Object corpo) => _enviar('PUT', caminho, corpo);
   Future<dynamic> delete(String caminho) => _enviar('DELETE', caminho);
+
+  Future<String> autenticar(String email, String senha) async {
+    final resposta = await _enviar(
+      'POST',
+      '/auth/login',
+      formulario: {'username': email, 'password': senha},
+      incluirToken: false,
+    );
+    if (resposta is! Map ||
+        resposta['access_token'] is! String ||
+        (resposta['access_token'] as String).isEmpty ||
+        resposta['token_type'] is! String ||
+        (resposta['token_type'] as String).toLowerCase() != 'bearer') {
+      throw ApiErro('Não foi possível concluir o acesso.');
+    }
+    return resposta['access_token'] as String;
+  }
 }

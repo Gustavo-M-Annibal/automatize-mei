@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api.dart';
 import 'modelos.dart';
@@ -6,16 +7,26 @@ import '../screens/repo.dart';
 
 class Estado extends ChangeNotifier {
   final Api api = Api();
+  final FlutterSecureStorage _armazenamentoSeguro =
+      const FlutterSecureStorage();
   late SharedPreferences prefs;
   late Repo repo;
   Dados dados = Dados.vazio();
 
   bool carregando = true;
+  bool inicializado = false;
   bool local = false; // true = dados salvos só neste aparelho
+  bool autenticado = false;
   bool semConexao = false; // modo servidor, mas o servidor não respondeu
   String? modo; // 'api' | 'local'
   double trocoFixo = 0; // dinheiro miúdo que já fica na gaveta
   DateTime _diaVisto = soDia(DateTime.now());
+
+  Estado() {
+    api.aoReceber401 = _sessaoExpirada;
+  }
+
+  bool get acessoLiberado => local || autenticado;
 
   List<Produto> get produtos => dados.produtos;
   List<Venda> get vendas => dados.vendas;
@@ -25,11 +36,40 @@ class Estado extends ChangeNotifier {
   // ------------------------------------------------------------ carregamento
 
   Future<void> iniciar() async {
-    prefs = await SharedPreferences.getInstance();
-    api.baseUrl = prefs.getString('api_url') ?? api.baseUrl;
-    modo = prefs.getString('modo');
-    trocoFixo = prefs.getDouble('troco_fixo') ?? 0;
-    await carregar();
+    carregando = true;
+    notifyListeners();
+    try {
+      prefs = await SharedPreferences.getInstance();
+      api.baseUrl = prefs.getString('api_url') ?? api.baseUrl;
+      modo = prefs.getString('modo');
+      trocoFixo = prefs.getDouble('troco_fixo') ?? 0;
+
+      if (modo == 'local') {
+        api.token = null;
+        await _armazenamentoSeguro.delete(key: 'access_token');
+        await _usarLocal();
+        return;
+      }
+
+      final token = await _armazenamentoSeguro.read(key: 'access_token');
+      if (token == null || token.isEmpty) {
+        api.token = null;
+        autenticado = false;
+        local = false;
+        dados = Dados.vazio();
+        return;
+      }
+
+      api.token = token;
+      autenticado = true;
+      modo = 'api';
+      await prefs.setString('modo', 'api');
+      await carregar();
+    } finally {
+      carregando = false;
+      inicializado = true;
+      notifyListeners();
+    }
   }
 
   Future<bool> _tentarApi() async {
@@ -62,13 +102,8 @@ class Estado extends ChangeNotifier {
     try {
       if (modo == 'local') {
         await _usarLocal();
-      } else if (await _tentarApi()) {
-        modo = 'api';
-        await prefs.setString('modo', 'api');
       } else if (modo == 'api') {
-        semConexao = true;
-      } else {
-        await _usarLocal();
+        semConexao = !await _tentarApi();
       }
     } finally {
       carregando = false;
@@ -90,7 +125,68 @@ class Estado extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> configurarUrlApi(String url) async {
+    final normalizada = url.trim().replaceAll(RegExp(r'/+$'), '');
+    final uri = Uri.tryParse(normalizada);
+    if (uri == null ||
+        !{'http', 'https'}.contains(uri.scheme) ||
+        uri.host.isEmpty) {
+      throw ApiErro('Informe um endereço válido para a API.');
+    }
+    api.baseUrl = normalizada;
+    await prefs.setString('api_url', normalizada);
+  }
+
+  Future<void> autenticar(
+    String email,
+    String senha, {
+    required bool lembrar,
+  }) async {
+    final token = await api.autenticar(email, senha);
+    if (lembrar) {
+      await _armazenamentoSeguro.write(key: 'access_token', value: token);
+    } else {
+      await _armazenamentoSeguro.delete(key: 'access_token');
+    }
+    api.token = token;
+    autenticado = false;
+    local = false;
+    modo = 'api';
+    semConexao = false;
+    await prefs.setString('modo', 'api');
+    await carregar();
+    if (api.token == null) {
+      throw ApiErro('Sua sessão não pôde ser validada.', statusCode: 401);
+    }
+    autenticado = true;
+    notifyListeners();
+  }
+
+  Future<void> _sessaoExpirada() async {
+    if (api.token == null) return;
+    api.token = null;
+    autenticado = false;
+    semConexao = false;
+    await _armazenamentoSeguro.delete(key: 'access_token');
+    notifyListeners();
+  }
+
+  Future<void> sair() async {
+    api.token = null;
+    autenticado = false;
+    local = false;
+    semConexao = false;
+    modo = 'api';
+    dados = Dados.vazio();
+    await _armazenamentoSeguro.delete(key: 'access_token');
+    await prefs.setString('modo', 'api');
+    notifyListeners();
+  }
+
   Future<void> usarLocal() async {
+    api.token = null;
+    autenticado = false;
+    await _armazenamentoSeguro.delete(key: 'access_token');
     await _usarLocal();
     semConexao = false;
     notifyListeners();
@@ -145,6 +241,9 @@ class Estado extends ChangeNotifier {
       .fold(0.0, (a, v) => a + v.valor));
   double cartaoDoDia(DateTime d) => cent(vendasDoDia(d)
       .where((v) => v.forma == Forma.cartao)
+      .fold(0.0, (a, v) => a + v.valor));
+    double pixDoDia(DateTime d) => cent(vendasDoDia(d)
+      .where((v) => v.forma == Forma.pix)
       .fold(0.0, (a, v) => a + v.valor));
   int itensDoDia(DateTime d) =>
       vendasDoDia(d).fold(0, (a, v) => a + v.quantidade);
@@ -308,6 +407,7 @@ class Estado extends ChangeNotifier {
       saidas: saidasGavetaDoDia(h),
       contado: cent(contado),
       cartao: cartaoDoDia(h),
+      pix: pixDoDia(h),
     );
     final salvo = await repo.fecharCaixa(f);
     dados.fechamentos.add(salvo);
