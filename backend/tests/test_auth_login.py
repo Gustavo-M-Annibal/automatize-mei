@@ -112,6 +112,25 @@ def test_rotas_de_dados_exigem_token(ctx):
     assert resposta.status_code == 200
 
 
+def test_buscar_produto_por_id_retorna_404_quando_nao_existe(ctx):
+    client, _ = ctx
+    token = _login(client).json()["access_token"]
+    headers = {"Authorization": f"Bearer {token}"}
+    criado = client.post(
+        "/produtos",
+        json={"nome": "Morango", "preco": 3.5, "estoque": 8},
+        headers=headers,
+    )
+    assert criado.status_code == 201
+
+    encontrado = client.get(f"/produtos/{criado.json()['id']}", headers=headers)
+    inexistente = client.get("/produtos/9999", headers=headers)
+
+    assert encontrado.status_code == 200
+    assert encontrado.json()["nome"] == "Morango"
+    assert inexistente.status_code == 404
+
+
 def test_token_expirado_e_rejeitado(ctx):
     expirado = jwt.encode(
         {"sub": EMAIL, "exp": datetime.now(timezone.utc) - timedelta(minutes=1)},

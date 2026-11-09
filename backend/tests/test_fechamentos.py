@@ -1,8 +1,11 @@
 """Testes de integração dos endpoints de fechamento."""
 
+from datetime import datetime
+
 import pytest
 
 from backend.app.core.security import criar_access_token
+from backend.app.services import venda_service
 
 
 @pytest.fixture(autouse=True)
@@ -43,6 +46,23 @@ def test_criar_fechamento_duplicado_retorna_409(client):
     assert resp.status_code == 409
     assert "detail" in resp.json()
     assert isinstance(resp.json()["detail"], str)
+
+
+def test_registrar_venda_em_dia_fechado_retorna_409(client, monkeypatch):
+    monkeypatch.setattr(
+        venda_service,
+        "agora_negocio",
+        lambda: datetime.fromisoformat("2026-10-20T15:00:00-03:00"),
+    )
+    client.post("/fechamentos", json=FECHAMENTO_PAYLOAD)
+
+    resp = client.post(
+        "/vendas",
+        json={"produto_id": 999, "quantidade": 1, "forma_pagamento": "dinheiro"},
+    )
+
+    assert resp.status_code == 409
+    assert "já possui fechamento" in resp.json()["detail"]
 
 
 def test_deletar_fechamento_existente(client):

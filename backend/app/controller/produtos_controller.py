@@ -23,6 +23,20 @@ def listar(db: Session = Depends(get_db)):
     return ProdutoService(db).listar_produtos()
 
 
+@router.get(
+    "/{produto_id}",
+    response_model=ProdutoResponse,
+    summary="Buscar produto",
+    description="Retorna os dados de um produto pelo id.",
+    responses={404: {"description": "Produto não encontrado."}},
+)
+def buscar(produto_id: int, db: Session = Depends(get_db)):
+    try:
+        return ProdutoService(db).buscar_por_id(produto_id)
+    except ProdutoNaoEncontradoError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
 @router.post(
     "",
     response_model=ProdutoResponse,

@@ -10,6 +10,10 @@ from typing import NoReturn
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 
+from backend.app.core.timezone import agora_negocio, get_business_day
+from backend.app.repositories import fechamento_repository
+from backend.app.services.fechamento_service import DiaJaFechadoError
+
 TABELA_PRODUTOS = "produtos"
 TABELA_VENDAS = "vendas"
 
@@ -62,6 +66,10 @@ def registrar_venda(db: Session, item_ou_itens, forma_pagamento: str | None = No
         quantidades[item.produto_id] = quantidades.get(item.produto_id, 0) + item.quantidade
 
     try:
+        dia = get_business_day(agora_negocio())
+        if fechamento_repository.buscar_por_dia(db, dia):
+            raise DiaJaFechadoError(f"Dia {dia} já possui fechamento registrado.")
+
         vendas = []
         total = Decimal("0.00")
         # Ordem fixa por id: evita deadlock entre duas vendas com os mesmos produtos.

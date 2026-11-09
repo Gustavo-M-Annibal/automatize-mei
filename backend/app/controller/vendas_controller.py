@@ -35,6 +35,7 @@ def listar(db: Session = Depends(get_db)):
     ),
     responses={
         400: {"description": "Estoque insuficiente para a quantidade solicitada."},
+        409: {"description": "O dia da venda já possui fechamento de caixa."},
         404: {"description": "Produto não encontrado."},
         422: {"description": "Dados inválidos (quantidade zero, forma_pagamento inválida, etc.)."},
     },
@@ -53,6 +54,8 @@ def registrar(dados: VendaCreate, db: Session = Depends(get_db)):
                 f"pedido {exc.solicitado}, disponível {exc.disponivel}."
             ),
         ) from exc
+    except DiaJaFechadoError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
 
 
 @router.delete(

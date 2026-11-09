@@ -61,10 +61,10 @@ class Estado extends ChangeNotifier {
       }
 
       api.token = token;
-      autenticado = true;
       modo = 'api';
       await prefs.setString('modo', 'api');
       await carregar();
+      autenticado = true;
     } finally {
       carregando = false;
       inicializado = true;
