@@ -17,3 +17,7 @@ env/
 # Flutter / Dart
 app_flutter/.dart_tool/
 app_flutter/build/
+
+# macOS
+.DS_Store
+**/.DS_Store
