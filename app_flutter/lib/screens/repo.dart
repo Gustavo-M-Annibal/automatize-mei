@@ -100,7 +100,7 @@ class RepoApi implements Repo {
       id: (m['id'] as num?)?.toInt(),
       produtoId: p.id,
       quantidade: qtd,
-      valor: ((m['valor'] ?? p.preco * qtd) as num).toDouble(),
+      valor: numeroApi(m['valor'] ?? p.preco * qtd, campo: 'valor'),
       data: m['data'] != null
           ? DateTime.parse(m['data'] as String).toLocal()
           : DateTime.now(),

@@ -46,7 +46,16 @@ String brl(double v) {
   return '${neg ? '-' : ''}R\$ $inteiro,${partes[1]}';
 }
 
-double _num(dynamic x) => (x as num?)?.toDouble() ?? 0;
+double numeroApi(dynamic valor, {required String campo}) {
+  if (valor is num) return valor.toDouble();
+  if (valor is String) {
+    final numero = double.tryParse(valor);
+    if (numero != null) return numero;
+  }
+  throw FormatException('Valor numérico inválido no campo "$campo".');
+}
+
+double _num(dynamic x) => x == null ? 0 : numeroApi(x, campo: 'valor');
 
 /// Como o cliente pagou. Só o dinheiro entra na conferência da gaveta.
 enum Forma { dinheiro, cartao, pix }
@@ -122,7 +131,7 @@ class Produto {
   factory Produto.fromJson(Map<String, dynamic> m) => Produto(
         id: (m['id'] as num).toInt(),
         nome: m['nome'] as String,
-        preco: (m['preco'] as num).toDouble(),
+        preco: numeroApi(m['preco'], campo: 'preco'),
         estoque: (m['estoque'] as num).toInt(),
       );
 
@@ -150,7 +159,7 @@ class Venda {
         id: (m['id'] as num?)?.toInt(),
         produtoId: (m['produto_id'] as num).toInt(),
         quantidade: (m['quantidade'] as num).toInt(),
-        valor: (m['valor'] as num).toDouble(),
+        valor: numeroApi(m['valor'], campo: 'valor'),
         data: DateTime.parse((m['data'] ?? m['data_hora']) as String).toLocal(),
         forma: formaDe(m['forma_pagamento'] as String?),
       );
@@ -177,7 +186,7 @@ class Despesa {
   factory Despesa.fromJson(Map<String, dynamic> m) => Despesa(
         id: (m['id'] as num?)?.toInt(),
         categoria: categoriaDe(m['categoria'] as String?),
-        valor: (m['valor'] as num).toDouble(),
+        valor: numeroApi(m['valor'], campo: 'valor'),
         data: DateTime.parse(m['data'] as String).toLocal(),
         daGaveta: m['da_gaveta'] == true,
       );
