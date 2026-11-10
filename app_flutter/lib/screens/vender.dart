@@ -84,10 +84,9 @@ class _VenderPageState extends State<VenderPage> {
       await mostrarSucesso(context, brl(valor));
       if (!mounted) return;
       msg.showSnackBar(SnackBar(
-        duration: const Duration(seconds: 6),
-        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.fixed,
         backgroundColor: Cores.tinta,
-        margin: EdgeInsets.fromLTRB(20, 0, 20, 96 + inset),
         content: Text('Venda de ${brl(valor)} registrada',
             style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
         action: SnackBarAction(

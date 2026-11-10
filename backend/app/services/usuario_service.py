@@ -22,6 +22,10 @@ def _buscar_por_email(db: Session, email: str):
     return db.query(UsuarioModel).filter(UsuarioModel.email == email).first()
 
 
+def buscar_por_email(db: Session, email: str):
+    return _buscar_por_email(db, email.strip().lower())
+
+
 def cadastrar_usuario(db: Session, nome: str, email: str, senha: str) -> UsuarioModel:
     email = email.strip().lower()
     if _buscar_por_email(db, email):

@@ -1,3 +1,19 @@
-# Este arquivo será destinado à listagem de arquivos e pastas que não devem ser versionados pelo Git
-# (ex: ambientes virtuais, dependências instaladas, arquivos de build, variáveis de ambiente sensíveis).
+# Variáveis de ambiente (nunca versionar — contém senhas e chaves)
+.env
 .env.local
+.env.*
+
+# Cache do Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ambientes virtuais
+venv/
+.venv/
+env/
+
+# Flutter / Dart
+app_flutter/.dart_tool/
+app_flutter/build/

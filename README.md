@@ -1,7 +1,7 @@
 # Automatize MEI
 
 Projeto da disciplina de **Programação Orientada a Objetos**, com o objetivo de automatizar processos
-de um MEI (Microempreendedor Individual) parceiro, atuante na produção e venda de geladinho gourmet
+de um MEI (Microempreendedor Individual) parceira, atuante na produção e venda de geladinho gourmet
 e salgadinho de copo há aproximadamente 9 anos (com um intervalo de pausa no meio desse período).
 
 ## I. Integrantes e parceira
@@ -84,72 +84,159 @@ produção e expansão (ex: venda por redes sociais, mencionada por ela na entre
 
 ## Tecnologias
 
-- **Backend (API):** Python + FastAPI, Programação Orientada a Objetos
-- **Site:** Python
+- **Backend (API):** Python 3.12+ · FastAPI · SQLAlchemy · Alembic · PostgreSQL · JWT (python-jose) · bcrypt
+- **Site:** Python — _pendente de implementação_
 - **Aplicativo:** Flutter/Dart
-- **Documentação da API:** Swagger (`/docs`)
+- **Documentação interativa da API:** Swagger em `/docs`
+- **Testes:** pytest + httpx
+
+## Arquitetura do backend
+
+O backend segue uma arquitetura em camadas (MVC-like), separando claramente responsabilidades:
+
+```
+Controller  →  recebe a requisição HTTP e delega ao Service
+Service     →  aplica as regras de negócio e coordena transações
+Repository  →  acessa o banco de dados via SQLAlchemy ORM
+Model       →  define o esquema das tabelas (mapeamento ORM)
+Schema      →  valida e serializa dados de entrada/saída (Pydantic v2)
+Core        →  configuração, conexão ao banco, segurança (JWT/bcrypt), dependências
+```
+
+## Endpoints implementados
+
+Todos os endpoints (exceto `/auth`) exigem o header `Authorization: Bearer <token>`.
+
+| Módulo | Método | Rota | Descrição |
+|---|---|---|---|
+| Auth | POST | `/auth/register` | Cadastra usuário (senha armazenada como hash bcrypt) |
+| Auth | POST | `/auth/login` | Autentica e retorna token JWT |
+| Produtos | GET | `/produtos` | Lista todos os produtos |
+| Produtos | GET | `/produtos/{id}` | Busca produto por ID |
+| Produtos | POST | `/produtos` | Cria produto |
+| Produtos | PUT | `/produtos/{id}` | Atualiza produto |
+| Produtos | DELETE | `/produtos/{id}` | Remove produto |
+| Vendas | GET | `/vendas` | Lista todas as vendas |
+| Vendas | POST | `/vendas` | Registra venda e baixa estoque atomicamente |
+| Vendas | DELETE | `/vendas/{id}` | Cancela venda e restaura estoque |
+| Despesas | GET | `/despesas` | Lista todas as despesas |
+| Despesas | POST | `/despesas` | Registra despesa |
+| Despesas | DELETE | `/despesas/{id}` | Remove despesa |
+| Fechamentos | GET | `/fechamentos` | Lista histórico de fechamentos de caixa |
+| Fechamentos | POST | `/fechamentos` | Fecha o caixa do dia (totais recalculados pelo servidor) |
+| Fechamentos | DELETE | `/fechamentos/{id}` | Reabre fechamento |
+| Produções | POST | `/producoes` | Registra lote produzido e incrementa estoque |
+| Perdas | POST | `/perdas` | Registra perda e decrementa estoque |
 
 ## Estrutura do projeto
 
 ```
 automatize-mei/
-├── backend/        # API em Python (FastAPI): main.py, models/, schemas/, repositories/, services/, api/, core/, tests/
-├── site/            # Interface adicional web (Python), consumindo a API
-├── app_flutter/      # Interface adicional mobile (Flutter), consumindo a API
-└── docs/             # Documentação técnica (exemplos de requisições, fluxo de erros)
+├── backend/
+│   ├── app/
+│   │   ├── controller/     # Rotas HTTP (FastAPI APIRouter por domínio)
+│   │   ├── services/       # Regras de negócio e coordenação de transações
+│   │   ├── repositories/   # Acesso ao banco de dados (ORM)
+│   │   ├── models/         # Modelos SQLAlchemy (mapeamento de tabelas)
+│   │   ├── schemas/        # Schemas Pydantic (validação e serialização)
+│   │   ├── core/           # Config, DB, segurança (JWT/bcrypt), dependências, timezone
+│   │   └── main.py         # Ponto de entrada da aplicação FastAPI
+│   ├── alembic/            # Migrations do banco de dados
+│   │   └── versions/       # 001 schema inicial · 002 usuários e CHECKs · 003 total_pix
+│   ├── tests/              # Testes de integração (pytest + httpx)
+│   ├── alembic.ini
+│   └── requirements.txt
+├── database/
+│   └── connection.py       # Engine e SessionLocal compartilhados (SQLAlchemy)
+├── site/                   # Interface web Python — pendente de implementação
+│   ├── app.py              # (stub)
+│   ├── templates/          # (stub)
+│   └── static/
+├── app_flutter/            # Aplicativo mobile Flutter — em desenvolvimento
+├── docs/                   # Documentação técnica (exemplos de requisição, fluxo de erros)
+├── scripts/
+│   └── criar_usuario.py    # Script auxiliar para criação de usuário via CLI
+├── docker-compose.yml      # Sobe o PostgreSQL na porta 5433
+├── .env.example
+└── README.md
 ```
+
+## Tabelas do banco de dados
+
+| Tabela | Descrição |
+|---|---|
+| `usuarios` | Usuários com senha_hash bcrypt e cargo |
+| `produtos` | Produtos com nome, preço e estoque atual |
+| `vendas` | Registro de vendas (produto, quantidade, valor, forma de pagamento) |
+| `despesas` | Despesas por categoria (ingredientes, embalagem, gás, outros) |
+| `fechamentos` | Fechamento de caixa diário com totais recalculados pelo servidor |
+| `producoes` | Entradas de produção por lote (incrementa estoque) |
+| `perdas` | Baixas por perda (decrementa estoque) |
 
 ## Como executar
 
-### Backend
+### Pré-requisitos
 
-**Pré-requisitos:** Docker, Python 3.11+
+- Docker (para o PostgreSQL)
+- Python 3.12+
 
-1. **Crie o arquivo `.env`** copiando o exemplo e ajustando as variáveis:
-   ```bash
-   cp .env.example .env
-   ```
-   Mantenha segredos locais em `.env.local` (ignorado pelo Git); a `SECRET_KEY` do JWT
-   deve ter pelo menos 32 caracteres.
-   As variáveis `DB_USER`, `DB_PASSWORD` e `DB_NAME` configuram tanto o backend quanto o PostgreSQL.
-   `DB_HOST` deve ser `localhost` quando a API roda fora do Docker; dentro de outro container da
-   mesma rede Compose, use `postgres`.
+### 1. Configurar variáveis de ambiente
 
-2. **Suba o PostgreSQL:**
-   ```bash
-   docker compose up -d
-   ```
-   O PostgreSQL fica disponível na porta `5433` do computador para evitar conflitos
-   com instalações locais; dentro do container permanece na porta `5432`.
-   A porta pode ser alterada com `DB_PORT`. Outras variáveis: `DB_HOST` e `BUSINESS_TZ`.
+```bash
+cp .env.example .env
+```
 
-3. **Instale as dependências Python:**
-   ```bash
-   pip install -r backend/requirements.txt
-   ```
+O arquivo `.env` já contém valores funcionais para desenvolvimento. A `SECRET_KEY` deve ter no mínimo 32 caracteres.
 
-4. **Execute as migrations** (cria as tabelas no banco):
-   ```bash
-   alembic -c backend/alembic.ini upgrade head
-   ```
+### 2. Subir o PostgreSQL
 
-5. **Inicie o servidor** (executa a partir da raiz do projeto):
-   ```bash
-   uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
-   ```
-   A documentação interativa estará em `http://localhost:8000/docs`.
+```bash
+docker compose up -d
+```
 
-6. **Rode os testes de integração:**
-   ```bash
-   pytest backend/tests/
-   ```
+O PostgreSQL fica disponível na porta `5433` do host (dentro do container usa `5432`).
+
+### 3. Instalar dependências Python
+
+```bash
+pip install -r backend/requirements.txt
+```
+
+### 4. Executar as migrations
+
+```bash
+alembic -c backend/alembic.ini upgrade head
+```
+
+### 5. Iniciar o servidor (executar da raiz do projeto)
+
+```bash
+uvicorn backend.app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+A documentação interativa Swagger estará em `http://localhost:8000/docs`.
+
+### 6. Rodar os testes de integração
+
+```bash
+pytest backend/tests/
+```
 
 > **Emulador Android:** o endereço padrão do app para alcançar a máquina host é `http://10.0.2.2:8000`.
 > Em dispositivos físicos, use o IP da máquina na rede local.
 
-> **Dados compartilhados:** a API não tem autenticação; todos os clientes que apontarem para a mesma
-> instância compartilham os mesmos dados.
-
 ## Status
 
-🚧 Em desenvolvimento — estrutura inicial do repositório commitada; Tópicos I a VI do trabalho teórico definidos.
+| Componente | Status |
+|---|---|
+| Backend — Auth (register/login, JWT, bcrypt) | ✅ Implementado |
+| Backend — Produtos (CRUD completo) | ✅ Implementado |
+| Backend — Vendas (registro + baixa de estoque atômica, cancelamento) | ✅ Implementado |
+| Backend — Despesas (CRUD com bloqueio por fechamento de caixa) | ✅ Implementado |
+| Backend — Fechamentos de caixa (totais calculados servidor) | ✅ Implementado |
+| Backend — Produções (registro de lote + incremento de estoque) | ✅ Implementado |
+| Backend — Perdas (registro + decremento de estoque com validação) | ✅ Implementado |
+| Backend — Migrations (3 versões: schema, usuários/CHECKs, total_pix) | ✅ Implementado |
+| Backend — Testes de integração | 🔄 Parcial (auth, vendas, despesas, fechamentos) |
+| Aplicativo Flutter | 🔄 Em desenvolvimento |
+| Site Python | ⬜ Pendente |

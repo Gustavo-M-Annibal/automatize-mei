@@ -106,6 +106,24 @@ class Api {
   Future<dynamic> delete(String caminho, {bool incluirToken = true}) =>
       _enviar('DELETE', caminho, null, incluirToken: incluirToken);
 
+  Future<void> solicitarReset(String email) async {
+    await _enviar(
+      'POST',
+      '/auth/solicitar-reset',
+      {'email': email},
+      incluirToken: false,
+    );
+  }
+
+  Future<void> redefinirSenha(String email, String codigo, String novaSenha) async {
+    await _enviar(
+      'POST',
+      '/auth/redefinir-senha',
+      {'email': email, 'codigo': codigo, 'nova_senha': novaSenha},
+      incluirToken: false,
+    );
+  }
+
   Future<String> autenticar(String email, String senha) async {
     final resposta = await _enviar(
       'POST',

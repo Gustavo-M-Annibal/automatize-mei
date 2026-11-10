@@ -69,6 +69,193 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<void> _abrirRedefinicaoSenha() async {
+    final emailCtrl = TextEditingController(text: _emailController.text.trim());
+    final codigoCtrl = TextEditingController();
+    final senhaCtrl = TextEditingController();
+    final confirmCtrl = TextEditingController();
+    final formEmail = GlobalKey<FormState>();
+    final formCodigo = GlobalKey<FormState>();
+    bool enviando = false;
+    bool passo2 = false; // false = pedir email, true = pedir código + nova senha
+    String emailEnviado = '';
+
+    await showDialog<void>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setDialogState) {
+          void mostrarErro(String msg) {
+            setDialogState(() => enviando = false);
+            if (ctx.mounted) {
+              ScaffoldMessenger.of(ctx).showSnackBar(SnackBar(
+                content: Text(msg),
+                backgroundColor: _marinho,
+              ));
+            }
+          }
+
+          // Passo 1 — solicitar código
+          Future<void> enviarCodigo() async {
+            if (!formEmail.currentState!.validate()) return;
+            setDialogState(() => enviando = true);
+            try {
+              await Escopo.de(context).api.solicitarReset(emailCtrl.text.trim());
+              emailEnviado = emailCtrl.text.trim();
+              setDialogState(() {
+                enviando = false;
+                passo2 = true;
+              });
+            } on ApiErro catch (e) {
+              mostrarErro(e.mensagem);
+            } catch (_) {
+              mostrarErro('Falha ao enviar e-mail. Tente novamente.');
+            }
+          }
+
+          // Passo 2 — confirmar código + nova senha
+          Future<void> redefinir() async {
+            if (!formCodigo.currentState!.validate()) return;
+            setDialogState(() => enviando = true);
+            try {
+              await Escopo.de(context).api.redefinirSenha(
+                emailEnviado,
+                codigoCtrl.text.trim(),
+                senhaCtrl.text,
+              );
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) {
+                _emailController.text = emailEnviado;
+                _senhaController.clear();
+                _mostrarAviso('Senha redefinida. Entre com a nova senha.');
+              }
+            } on ApiErro catch (e) {
+              mostrarErro(e.mensagem);
+            } catch (_) {
+              mostrarErro('Algo deu errado. Tente novamente.');
+            }
+          }
+
+          return AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: Text(
+              passo2 ? 'Verificar código' : 'Redefinir senha',
+              style: const TextStyle(fontWeight: FontWeight.w800, color: _marinho),
+            ),
+            content: passo2
+                ? Form(
+                    key: formCodigo,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Enviamos um código de 6 dígitos para $emailEnviado. Válido por 15 minutos.',
+                          style: const TextStyle(color: _textoSuave, fontSize: 13),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: codigoCtrl,
+                          keyboardType: TextInputType.number,
+                          maxLength: 6,
+                          decoration: _decoracao(
+                            dica: '000000',
+                            icone: Icons.pin_outlined,
+                          ),
+                          validator: (v) {
+                            if (v == null || v.length != 6) return 'Digite os 6 dígitos.';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 4),
+                        TextFormField(
+                          controller: senhaCtrl,
+                          obscureText: true,
+                          decoration: _decoracao(
+                            dica: 'Nova senha (mín. 8 caracteres)',
+                            icone: Icons.lock_outline_rounded,
+                          ),
+                          validator: (v) {
+                            if (v == null || v.length < 8) return 'Mínimo 8 caracteres.';
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 12),
+                        TextFormField(
+                          controller: confirmCtrl,
+                          obscureText: true,
+                          decoration: _decoracao(
+                            dica: 'Confirme a nova senha',
+                            icone: Icons.lock_outline_rounded,
+                          ),
+                          validator: (v) =>
+                              v != senhaCtrl.text ? 'As senhas não coincidem.' : null,
+                        ),
+                      ],
+                    ),
+                  )
+                : Form(
+                    key: formEmail,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Text(
+                          'Informe seu e-mail e enviaremos um código de verificação.',
+                          style: TextStyle(color: _textoSuave, fontSize: 13),
+                        ),
+                        const SizedBox(height: 16),
+                        TextFormField(
+                          controller: emailCtrl,
+                          keyboardType: TextInputType.emailAddress,
+                          decoration: _decoracao(
+                            dica: 'voce@exemplo.com',
+                            icone: Icons.mail_outline_rounded,
+                          ),
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) return 'Informe o e-mail.';
+                            if (!v.contains('@')) return 'E-mail inválido.';
+                            return null;
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+            actions: [
+              TextButton(
+                onPressed: enviando ? null : () => Navigator.pop(ctx),
+                child: const Text('Cancelar'),
+              ),
+              if (passo2)
+                TextButton(
+                  onPressed: enviando
+                      ? null
+                      : () => setDialogState(() {
+                            passo2 = false;
+                            codigoCtrl.clear();
+                          }),
+                  child: const Text('Voltar'),
+                ),
+              FilledButton(
+                style: FilledButton.styleFrom(backgroundColor: _verde),
+                onPressed: enviando ? null : (passo2 ? redefinir : enviarCodigo),
+                child: enviando
+                    ? const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                      )
+                    : Text(passo2 ? 'Redefinir' : 'Enviar código'),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+
+    emailCtrl.dispose();
+    codigoCtrl.dispose();
+    senhaCtrl.dispose();
+    confirmCtrl.dispose();
+  }
+
   Future<void> _irParaCadastro() async {
     final email = await Navigator.of(context).push<String>(
       MaterialPageRoute(builder: (_) => const CadastroPage()),
@@ -242,9 +429,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   TextButton(
-                    onPressed: () => _mostrarAviso(
-                      'Recuperação de senha ainda não configurada.',
-                    ),
+                    onPressed: _abrirRedefinicaoSenha,
                     style: TextButton.styleFrom(
                       foregroundColor: _verde,
                       padding: const EdgeInsets.symmetric(horizontal: 4),

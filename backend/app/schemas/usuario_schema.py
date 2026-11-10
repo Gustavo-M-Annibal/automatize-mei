@@ -46,3 +46,39 @@ class TokenResponse(BaseModel):
 
     access_token: str
     token_type: str = "bearer"
+
+
+class SolicitarResetRequest(BaseModel):
+    email: str = Field(max_length=255)
+
+    @field_validator("email")
+    @classmethod
+    def _email_valido(cls, v: str) -> str:
+        v = v.strip().lower()
+        if not _EMAIL.match(v):
+            raise ValueError("E-mail inválido.")
+        return v
+
+
+class RedefinirSenhaRequest(BaseModel):
+    email: str = Field(max_length=255)
+    codigo: str = Field(min_length=6, max_length=6)
+    nova_senha: SecretStr
+
+    @field_validator("email")
+    @classmethod
+    def _email_valido(cls, v: str) -> str:
+        v = v.strip().lower()
+        if not _EMAIL.match(v):
+            raise ValueError("E-mail inválido.")
+        return v
+
+    @field_validator("nova_senha")
+    @classmethod
+    def _senha_valida(cls, v: SecretStr) -> SecretStr:
+        s = v.get_secret_value()
+        if len(s) < 8:
+            raise ValueError("A senha deve ter pelo menos 8 caracteres.")
+        if len(s.encode("utf-8")) > 72:
+            raise ValueError("A senha deve ter no máximo 72 bytes.")
+        return v
