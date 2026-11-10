@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../widgets/api.dart';
+import '../widgets/estado.dart';
 
 class CadastroPage extends StatefulWidget {
   const CadastroPage({super.key});
@@ -17,6 +19,7 @@ class _CadastroPageState extends State<CadastroPage> {
   bool _mostrarConfirmacao = false;
   bool _aceitouTermos = false;
   bool _erroTermos = false;
+  bool _cadastrando = false;
 
   static const _marinho = Color(0xFF112B46);
   static const _verde = Color(0xFF167C62);
@@ -50,12 +53,32 @@ class _CadastroPageState extends State<CadastroPage> {
 
   void _voltarParaLogin() => Navigator.of(context).pop();
 
-  void _cadastrar() {
+  Future<void> _cadastrar() async {
     final formularioValido = _formKey.currentState!.validate();
     setState(() => _erroTermos = !_aceitouTermos);
 
-    if (!formularioValido || !_aceitouTermos) return;
-    _mostrarAviso('Protótipo visual: o cadastro ainda não está conectado.');
+    if (!formularioValido || !_aceitouTermos || _cadastrando) return;
+
+    setState(() => _cadastrando = true);
+    final email = _emailController.text.trim().toLowerCase();
+    try {
+      await Escopo.de(context).cadastrarUsuario(
+        nome: _nomeController.text,
+        email: email,
+        senha: _senhaController.text,
+      );
+      if (mounted) Navigator.of(context).pop(email);
+    } catch (erro) {
+      if (mounted) {
+        _mostrarAviso(
+          erro is ApiErro
+              ? erro.mensagem
+              : 'Não foi possível criar a conta. Tente novamente.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _cadastrando = false);
+    }
   }
 
   @override
@@ -216,7 +239,7 @@ class _CadastroPageState extends State<CadastroPage> {
                 textInputAction: TextInputAction.next,
                 autofillHints: const [AutofillHints.newPassword],
                 decoration: _decoracao(
-                  dica: 'Mínimo de 6 caracteres',
+                  dica: 'Mínimo de 8 caracteres',
                   icone: Icons.lock_outline_rounded,
                   sufixo: IconButton(
                     tooltip: _mostrarSenha ? 'Ocultar senha' : 'Mostrar senha',
@@ -235,8 +258,8 @@ class _CadastroPageState extends State<CadastroPage> {
                   if (valor == null || valor.isEmpty) {
                     return 'Crie uma senha.';
                   }
-                  if (valor.length < 6) {
-                    return 'A senha precisa ter ao menos 6 caracteres.';
+                  if (valor.length < 8) {
+                    return 'A senha precisa ter ao menos 8 caracteres.';
                   }
                   return null;
                 },
@@ -330,7 +353,7 @@ class _CadastroPageState extends State<CadastroPage> {
               SizedBox(
                 height: 54,
                 child: FilledButton(
-                  onPressed: _cadastrar,
+                  onPressed: _cadastrando ? null : _cadastrar,
                   style: FilledButton.styleFrom(
                     backgroundColor: _verde,
                     foregroundColor: Colors.white,
@@ -342,13 +365,26 @@ class _CadastroPageState extends State<CadastroPage> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Criar minha conta'),
-                      SizedBox(width: 9),
-                      Icon(Icons.arrow_forward_rounded, size: 19),
-                    ],
+                    children: _cadastrando
+                        ? [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Text('Criando conta...'),
+                          ]
+                        : [
+                            Text('Criar minha conta'),
+                            SizedBox(width: 9),
+                            Icon(Icons.arrow_forward_rounded, size: 19),
+                          ],
                   ),
                 ),
               ),

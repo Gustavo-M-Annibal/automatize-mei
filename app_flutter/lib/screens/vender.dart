@@ -55,7 +55,7 @@ class _VenderPageState extends State<VenderPage> {
               if (forma != Forma.values.last) const SizedBox(height: 12),
             ],
           ]),
-        );
+        ),
       ),
     );
   }

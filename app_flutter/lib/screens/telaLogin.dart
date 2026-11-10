@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import 'cadastro_page.dart';
+import '../widgets/api.dart';
+import '../widgets/estado.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,6 +17,7 @@ class _LoginPageState extends State<LoginPage> {
   final _senhaController = TextEditingController();
   bool _mostrarSenha = false;
   bool _lembrarAcesso = true;
+  bool _entrando = false;
 
   static const _marinho = Color(0xFF112B46);
   static const _verde = Color(0xFF167C62);
@@ -43,15 +46,39 @@ class _LoginPageState extends State<LoginPage> {
       );
   }
 
-  void _entrar() {
+  Future<void> _entrar() async {
     if (!_formKey.currentState!.validate()) return;
-    _mostrarAviso('Protótipo visual: o acesso ainda não está conectado.');
+    if (_entrando) return;
+    setState(() => _entrando = true);
+    try {
+      await Escopo.de(context).autenticar(
+        _emailController.text.trim(),
+        _senhaController.text,
+        lembrar: _lembrarAcesso,
+      );
+    } catch (erro) {
+      if (mounted) {
+        _mostrarAviso(
+          erro is ApiErro
+              ? erro.mensagem
+              : 'Não foi possível entrar. Verifique a conexão e tente novamente.',
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _entrando = false);
+    }
   }
 
-  void _irParaCadastro() {
-    Navigator.of(context).push(
+  Future<void> _irParaCadastro() async {
+    final email = await Navigator.of(context).push<String>(
       MaterialPageRoute(builder: (_) => const CadastroPage()),
     );
+    if (!mounted || email == null) return;
+    setState(() {
+      _emailController.text = email;
+      _senhaController.clear();
+    });
+    _mostrarAviso('Conta criada. Entre com seu e-mail e senha.');
   }
 
   @override
@@ -236,7 +263,7 @@ class _LoginPageState extends State<LoginPage> {
               SizedBox(
                 height: 54,
                 child: FilledButton(
-                  onPressed: _entrar,
+                  onPressed: _entrando ? null : _entrar,
                   style: FilledButton.styleFrom(
                     backgroundColor: _verde,
                     foregroundColor: Colors.white,
@@ -248,13 +275,26 @@ class _LoginPageState extends State<LoginPage> {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text('Entrar na minha conta'),
-                      SizedBox(width: 9),
-                      Icon(Icons.arrow_forward_rounded, size: 19),
-                    ],
+                    children: _entrando
+                        ? [
+                            SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            ),
+                            SizedBox(width: 10),
+                            Text('Entrando...'),
+                          ]
+                        : [
+                            Text('Entrar na minha conta'),
+                            SizedBox(width: 9),
+                            Icon(Icons.arrow_forward_rounded, size: 19),
+                          ],
                   ),
                 ),
               ),

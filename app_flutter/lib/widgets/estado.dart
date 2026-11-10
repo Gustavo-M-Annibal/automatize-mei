@@ -162,6 +162,22 @@ class Estado extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> cadastrarUsuario({
+    required String nome,
+    required String email,
+    required String senha,
+  }) async {
+    await api.post(
+      '/auth/register',
+      {
+        'nome': nome.trim(),
+        'email': email.trim(),
+        'senha': senha,
+      },
+      incluirToken: false,
+    );
+  }
+
   Future<void> _sessaoExpirada() async {
     if (api.token == null) return;
     api.token = null;

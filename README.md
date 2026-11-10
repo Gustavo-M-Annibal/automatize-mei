@@ -109,6 +109,8 @@ automatize-mei/
    ```bash
    cp .env.example .env
    ```
+   Mantenha segredos locais em `.env.local` (ignorado pelo Git); a `SECRET_KEY` do JWT
+   deve ter pelo menos 32 caracteres.
    As variáveis `DB_USER`, `DB_PASSWORD` e `DB_NAME` configuram tanto o backend quanto o PostgreSQL.
    `DB_HOST` deve ser `localhost` quando a API roda fora do Docker; dentro de outro container da
    mesma rede Compose, use `postgres`.
@@ -117,7 +119,9 @@ automatize-mei/
    ```bash
    docker compose up -d
    ```
-   Variáveis adicionais: `DB_HOST`, `DB_PORT` e `BUSINESS_TZ`.
+   O PostgreSQL fica disponível na porta `5433` do computador para evitar conflitos
+   com instalações locais; dentro do container permanece na porta `5432`.
+   A porta pode ser alterada com `DB_PORT`. Outras variáveis: `DB_HOST` e `BUSINESS_TZ`.
 
 3. **Instale as dependências Python:**
    ```bash
@@ -126,7 +130,7 @@ automatize-mei/
 
 4. **Execute as migrations** (cria as tabelas no banco):
    ```bash
-   alembic upgrade head
+   alembic -c backend/alembic.ini upgrade head
    ```
 
 5. **Inicie o servidor** (executa a partir da raiz do projeto):

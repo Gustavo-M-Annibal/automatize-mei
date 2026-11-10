@@ -5,6 +5,7 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 load_dotenv()
+load_dotenv(".env.local", override=True)
 
 SECRET_KEY = os.getenv("SECRET_KEY", "")
 if len(SECRET_KEY) < 32:

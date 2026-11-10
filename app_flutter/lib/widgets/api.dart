@@ -24,7 +24,8 @@ class Api {
   Map<String, String> _cab({
     required bool incluirToken,
     required bool formulario,
-  }) => {
+  }) =>
+      {
         'Content-Type': formulario
             ? 'application/x-www-form-urlencoded'
             : 'application/json',
@@ -32,7 +33,8 @@ class Api {
       };
 
   String _mensagem(int codigo, dynamic json) {
-    if (json is Map && json['detail'] is String) return json['detail'] as String;
+    if (json is Map && json['detail'] is String)
+      return json['detail'] as String;
     switch (codigo) {
       case 401:
         return 'É preciso entrar de novo.';
@@ -50,9 +52,8 @@ class Api {
 
   Future<dynamic> _enviar(
     String metodo,
-    String caminho, [
-    Object? corpo,
-  ], {
+    String caminho,
+    Object? corpo, {
     Map<String, String>? formulario,
     bool incluirToken = true,
   }) async {
@@ -62,6 +63,9 @@ class Api {
         incluirToken: incluirToken,
         formulario: formulario != null,
       ));
+      if (incluirToken && token != null) {
+        req.headers['Authorization'] = 'Bearer $token';
+      }
       if (formulario != null) {
         req.bodyFields = formulario;
       } else if (corpo != null) {
@@ -83,19 +87,30 @@ class Api {
     } on ApiErro {
       rethrow;
     } catch (_) {
-      throw ApiErro('Sem conexão com o servidor. Confira a internet e o endereço da API.');
+      throw ApiErro(
+          'Sem conexão com o servidor. Confira a internet e o endereço da API.');
     }
   }
 
-  Future<dynamic> get(String caminho) => _enviar('GET', caminho);
-  Future<dynamic> post(String caminho, Object corpo) => _enviar('POST', caminho, corpo);
-  Future<dynamic> put(String caminho, Object corpo) => _enviar('PUT', caminho, corpo);
-  Future<dynamic> delete(String caminho) => _enviar('DELETE', caminho);
+  Future<dynamic> get(String caminho, {bool incluirToken = true}) =>
+      _enviar('GET', caminho, null, incluirToken: incluirToken);
+
+  Future<dynamic> post(String caminho, Object corpo,
+          {bool incluirToken = true}) =>
+      _enviar('POST', caminho, corpo, incluirToken: incluirToken);
+
+  Future<dynamic> put(String caminho, Object corpo,
+          {bool incluirToken = true}) =>
+      _enviar('PUT', caminho, corpo, incluirToken: incluirToken);
+
+  Future<dynamic> delete(String caminho, {bool incluirToken = true}) =>
+      _enviar('DELETE', caminho, null, incluirToken: incluirToken);
 
   Future<String> autenticar(String email, String senha) async {
     final resposta = await _enviar(
       'POST',
       '/auth/login',
+      null,
       formulario: {'username': email, 'password': senha},
       incluirToken: false,
     );
